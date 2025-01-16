@@ -4,47 +4,65 @@
              x:Class="NoteApp.MainPage">
 
     <ScrollView>
-        <VerticalStackLayout Margin="30,60,30,30">
+        <VerticalStackLayout Margin="30, 60, 30, 30" Spacing="20">
+            <!-- 标题 -->
             <Label
-                Text="Note"
-                HorizontalOptions="Center"
-                FontAttributes="Bold"
-                />
-            <Editor 
-                x:Name="editor"
-                Placeholder="Enter text!!!"
-                HeightRequest="100"
-                />
-            <Label 
-                x:Name="info"
-                Text="Empty"
-                WidthRequest="100"/>
-            <Grid ColumnDefinitions="Auto, 30, Auto, 30, Auto">
-                <Button
-                    Grid.Column="0"
-                    Text="Save"
-                    WidthRequest="100"
-                    Clicked="OnSave"
-                    />
-                <Button
-                    Grid.Column="2"
-                    Text="Cancel"
-                    WidthRequest="100"
-                    Clicked="OnCancel"
-                    />
-                <Button
-                    Grid.Column="4"
-                    Text="Read"
-                    WidthRequest="100"
-                    Clicked="OnRead"
-                    />
-            </Grid>
-            <Button 
-                Text="Exit"
-                Clicked="onExit"
-                />
+            Text="Note"
+            HorizontalOptions="Center"
+            FontAttributes="Bold"
+            FontSize="Title" />
 
+            <!-- 编辑框 -->
+            <Editor 
+            x:Name="editor"
+            Placeholder="Enter text..."
+            HeightRequest="100"
+            />
+
+            <!-- 信息标签 -->
+            <Label 
+            x:Name="info"
+            Text="Empty"
+            WidthRequest="100"
+            HorizontalOptions="Center" />
+
+            <!-- 操作按钮网格 -->
+            <Grid ColumnDefinitions="Auto, 20, Auto, 20, Auto" HorizontalOptions="Center">
+                <Button
+                Grid.Column="0"
+                Text="Save"
+                WidthRequest="100"
+                Clicked="OnSave" />
+                <BoxView
+                Grid.Column="1"
+                WidthRequest="20"
+                HeightRequest="1"
+                BackgroundColor="Transparent" />
+                <Button
+                Grid.Column="2"
+                Text="Cancel"
+                WidthRequest="100"
+                Clicked="OnCancel" />
+                <BoxView
+                Grid.Column="3"
+                WidthRequest="20"
+                HeightRequest="1"
+                BackgroundColor="Transparent" />
+                <Button
+                Grid.Column="4"
+                Text="Read"
+                WidthRequest="100"
+                Clicked="OnRead" />
+            </Grid>
+
+
+            <!-- 退出按钮 -->
+            <Button 
+            Text="Exit"
+            Clicked="onExit"
+            HorizontalOptions="Center" />
         </VerticalStackLayout>
+
     </ScrollView>
 
 </ContentPage>

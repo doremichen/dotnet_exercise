@@ -8,7 +8,7 @@
         {
             InitializeComponent();
 
-            // check file ecistence
+            // check file existence
             if (File.Exists(_fileName))
             {
                 editor.Text = File.ReadAllText(_fileName);
@@ -27,14 +27,17 @@
         {
             await DisplayAlert("Info", "Cancel button is clicked!!!", "Ok");
             // clear text in screen
-            editor.Text = "";
+            editor.Text = string.Empty;
 
         }
 
         private void OnRead(object sender, EventArgs e)
         {
-            // read text from note.txt
-            editor.Text = File.ReadAllText(_fileName);
+            // check file existence
+            if (File.Exists(_fileName))
+            {
+                info.Text = File.ReadAllText(_fileName);
+            }
         }
 
         private async void onExit(object sender, EventArgs e)
