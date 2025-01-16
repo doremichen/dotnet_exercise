@@ -15,7 +15,11 @@
                 Placeholder="Enter text!!!"
                 HeightRequest="100"
                 />
-            <Grid ColumnDefinitions="Auto, 30, Auto">
+            <Label 
+                x:Name="info"
+                Text="Empty"
+                WidthRequest="100"/>
+            <Grid ColumnDefinitions="Auto, 30, Auto, 30, Auto">
                 <Button
                     Grid.Column="0"
                     Text="Save"
@@ -28,8 +32,18 @@
                     WidthRequest="100"
                     Clicked="OnCancel"
                     />
+                <Button
+                    Grid.Column="4"
+                    Text="Read"
+                    WidthRequest="100"
+                    Clicked="OnRead"
+                    />
             </Grid>
-                
+            <Button 
+                Text="Exit"
+                Clicked="onExit"
+                />
+
         </VerticalStackLayout>
     </ScrollView>
 
