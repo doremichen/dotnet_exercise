@@ -1,8 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="NoteApp.MainPage">
-
+             x:Class="NoteApp.Views.MainPage">
     <ScrollView>
         <VerticalStackLayout Margin="30, 60, 30, 30" Spacing="20">
             <!-- 标题 -->
@@ -14,8 +13,9 @@
 
             <!-- 编辑框 -->
             <Editor 
-            x:Name="editor"
+            x:Name="TextEditor"
             Placeholder="Enter text..."
+            Text="{Binding Textinfo}"
             HeightRequest="100"
             />
 
@@ -27,7 +27,7 @@
             HorizontalOptions="Center" />
 
             <!-- 操作按钮网格 -->
-            <Grid ColumnDefinitions="Auto, 20, Auto, 20, Auto" HorizontalOptions="Center">
+            <Grid ColumnDefinitions="Auto, 20, Auto, 20, Auto, 20, Auto" HorizontalOptions="Center">
                 <Button
                 Grid.Column="0"
                 Text="Save"
@@ -52,15 +52,24 @@
                 Grid.Column="4"
                 Text="Read"
                 WidthRequest="100"
-                Clicked="OnRead" />
+                Clicked="OnRead"/>
+                <BoxView
+                Grid.Column="5"
+                WidthRequest="20"
+                HeightRequest="1"
+                BackgroundColor="Transparent" />
+                <Button
+                Grid.Column="6"
+                Text="Delete"
+                WidthRequest="100"
+                Clicked="OnDelete"/>
             </Grid>
 
 
             <!-- 退出按钮 -->
             <Button 
             Text="Exit"
-            Clicked="onExit"
-            HorizontalOptions="Center" />
+            Clicked="onExit"/>
         </VerticalStackLayout>
 
     </ScrollView>
