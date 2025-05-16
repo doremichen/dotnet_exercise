@@ -1,0 +1,34 @@
+﻿<Window x:Class="WpfApp_DataBinding.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WpfApp_DataBinding"
+        xmlns:system="clr-namespace:System;assembly=mscorlib"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="900" Width="800">
+    <StackPanel Orientation="Vertical">
+        <TextBlock Text="Data Binding Example: OneWay" FontSize="24" Margin="10" HorizontalAlignment="Center"/>
+        <!-- default mode: oneway-->
+        <TextBlock Text="{Binding Name}" FontSize="24" Margin="10" HorizontalAlignment="Center"/>
+        <Button Content="Click me" FontSize="24" Margin="10" HorizontalAlignment="Center" Click="ChangeNameButton_Click"/>
+        <Border Height="1" Background="Gray" Margin="0,10" />
+        <TextBlock Text="Data Binding Example: TwoWay" FontSize="24" Margin="10" HorizontalAlignment="Center"/>
+        <TextBlock Text="{Binding Name}" FontSize="24" Margin="10" HorizontalAlignment="Center"/>
+        <!-- default mode: twoway-->
+        <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Width="278" Height="40" FontSize="24" Margin="10" HorizontalAlignment="Center"/>
+        <Button Content="Click me" FontSize="24" Margin="10" HorizontalAlignment="Center" Click="ChangeNameButton_Click1"/>
+        <Border Height="1" Background="Gray" Margin="0,10" />
+        <TextBlock Text="Data Binding Example: OneWayToSource" FontSize="24" Margin="10" HorizontalAlignment="Center"/>
+        <TextBlock Text="{Binding Comment, Mode=OneTime}" FontSize="24" Margin="10" HorizontalAlignment="Center"/>
+        <!-- mode: oneWayToSource -->
+        <TextBox Text="{Binding Comment, Mode=OneWayToSource}" Width="278" Height="40" FontSize="24" Margin="10" HorizontalAlignment="Center"/>
+        <Button Content="Click me" FontSize="24" Margin="10" HorizontalAlignment="Center" Click="ChangeNameButton_Click2"/>
+        <Border Height="1" Background="Gray" Margin="0,10" />
+        <Button Content="Open Collection Window" FontSize="24" Margin="10" HorizontalAlignment="Center" Click="OpenCollectionWindowButton_Click"/>
+        <Border Height="1" Background="Gray" Margin="0,10" />
+        <Button Content="Open Convert Window" FontSize="24" Margin="10" HorizontalAlignment="Center" Click="OpenConvertWindowButton_Click"/>
+
+    </StackPanel>
+
+</Window>
