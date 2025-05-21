@@ -1,7 +1,4 @@
-﻿using System.Data;
-using System.Data.OleDb;
-using System.Diagnostics;
-using System.Windows;
+﻿using System.Windows;
 using WpfApp_DataBinding.Models;
 
 

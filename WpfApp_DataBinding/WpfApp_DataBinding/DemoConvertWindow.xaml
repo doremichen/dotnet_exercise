@@ -5,17 +5,31 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfApp_DataBinding"
         mc:Ignorable="d"
-        Title="DemoConvertWindow" Height="450" Width="800">
+        Title="DemoConvertWindow" Height="450" Width="800"
+        FontFamily="Segoe UI" FontSize="16" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
     <Window.Resources>
         <local:BoolToTextConverter x:Key="BoolToTextConverter"/>
     </Window.Resources>
-    <Grid>
-        <StackPanel 
-           Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Stretch" Height="300">
-            <TextBlock Text="Data Binding Example: Converter" FontSize="24" Margin="10" HorizontalAlignment="Center"/>
-            <!-- IsChecked from ConvertViewModel -->
-            <TextBlock Text="{Binding IsChecked, Converter={StaticResource BoolToTextConverter}}" FontSize="24" Margin="10" HorizontalAlignment="Center"/>
-            <CheckBox Content="Swich function: " IsChecked="{Binding IsChecked}" FontSize="24" Margin="10" HorizontalAlignment="Center"/>
-        </StackPanel>
+
+    <Grid Margin="20">
+        <GroupBox Header="Data Binding with Converter" FontSize="18">
+            <StackPanel Margin="20">
+                <!-- 說明 -->
+                <TextBlock Text="This demonstrates binding with a value converter:"
+                           Margin="0,0,0,10"/>
+
+                <!-- 資料狀態顯示 -->
+                <DockPanel Margin="0,0,0,10">
+                    <TextBlock Text="Status:" Width="100"/>
+                    <TextBlock Text="{Binding IsChecked, Converter={StaticResource BoolToTextConverter}}"/>
+                </DockPanel>
+
+                <!-- 切換功能 -->
+                <DockPanel>
+                    <TextBlock Text="Switch function:" Width="135"/>
+                    <CheckBox IsChecked="{Binding IsChecked}" Width="574"/>
+                </DockPanel>
+            </StackPanel>
+        </GroupBox>
     </Grid>
 </Window>
