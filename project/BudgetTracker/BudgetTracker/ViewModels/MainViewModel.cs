@@ -1,4 +1,5 @@
 ﻿using BudgetTracker.Models;
+using BudgetTracker.Toast;
 using BudgetTracker.Utils;
 using BudgetTracker.Views;
 using System;
@@ -70,6 +71,7 @@ namespace BudgetTracker.ViewModels
             if (result == false)
             {
                 Util.Log("dialog result is false, return");
+                ToastManager.Show("Cancel add transaction dialog!!!", ToastType.Error, position: ToastPosition.Center, durationMs: 2000);
                 return;
             }
 
@@ -83,6 +85,8 @@ namespace BudgetTracker.ViewModels
             SelectedTransaction = newTransaction;
 
             updateSummary();
+
+            ToastManager.Show("Add transaction successfully!!!", ToastType.Success, position: ToastPosition.Center, durationMs: 2000);
 
         }
 
