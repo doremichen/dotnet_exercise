@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,11 +11,12 @@ namespace BudgetTracker.Models
     public class Transaction : INotifyPropertyChanged
     {
         private DateTime _date;
-        private string _category;
-        private string _description;
+        private string _category = string.Empty;
+        private string _description = string.Empty;
         private decimal _amount;
         private TransactionType _transactionType;
 
+        [Key] // This attribute indicates that this property is the primary key in the database.
         public Guid Id { get; set; } = Guid.NewGuid();
 
         public DateTime Date
@@ -83,9 +85,9 @@ namespace BudgetTracker.Models
         }
 
 
-        private void OnPropertyChanged(string v)
+        private void OnPropertyChanged(string propertyName)
         {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(v));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

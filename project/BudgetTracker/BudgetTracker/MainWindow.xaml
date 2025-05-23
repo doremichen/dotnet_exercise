@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:BudgetTracker" 
         xmlns:vm="clr-namespace:BudgetTracker.ViewModels"
         mc:Ignorable="d"
-        Title="Accounting Book" Height="450" Width="800">
+        Title="Accounting Book" Height="450" Width="800" Loaded="Window_Loaded">
     <Window.DataContext>
         <vm:MainViewModel />
     </Window.DataContext>

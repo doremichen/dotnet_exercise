@@ -1,4 +1,5 @@
-﻿using BudgetTracker.Models;
+﻿using BudgetTracker.Data.Repositories;
+using BudgetTracker.Models;
 using BudgetTracker.Toast;
 using BudgetTracker.Utils;
 using BudgetTracker.Views;
@@ -14,10 +15,15 @@ namespace BudgetTracker.ViewModels
 {
     public class MainViewModel : BaseViewModel
     {
+        // get TransactionRepository
+        private readonly TransactionRepository _transactionRepository = new TransactionRepository();
+
         public ObservableCollection<TransactionViewModel> Transactions { get; set; }
 
-        private TransactionViewModel? _selectedTransaction;
-        public TransactionViewModel? SelectedTransaction
+
+
+        private TransactionViewModel _selectedTransaction = null!;
+        public TransactionViewModel SelectedTransaction
         {
             get => _selectedTransaction;
             set
@@ -45,20 +51,29 @@ namespace BudgetTracker.ViewModels
             AddCommand = new RelayCommand(AddTransaction);
             DeleteCommand = new RelayCommand(DeleteTransaction, () => SelectedTransaction != null);
 
+            // load transactions from database
+            var allTransactions = _transactionRepository.GetAllAsync().Result;
+            Transactions.Clear();
+
+            foreach (var transaction in allTransactions)
+            {
+                Transactions.Add(new TransactionViewModel(transaction));
+            }
+
+            // set selected transaction to first transaction in list
+            if (Transactions.Count > 0)
+            {
+                SelectedTransaction = Transactions[0];
+            }
+            else
+            {
+                SelectedTransaction = null!;
+            }
+
         }
 
-        private void AddTransaction()
+        private async void AddTransaction()
         {
-            //var newTransaction = new TransactionViewModel(new Transaction
-            //{
-            //    Date = DateTime.Now,
-            //    Category = "New Category",
-            //    Description = "New Description",
-            //    Amount = 0,
-            //    TransactionType = TransactionType.Expense // Default to Expense
-            //});
-            //Transactions.Add(newTransaction);
-            //SelectedTransaction = newTransaction;
             Util.Log("show new transaction dialog");
             var dialog = new AddTransactionDialog()
             {
@@ -86,17 +101,36 @@ namespace BudgetTracker.ViewModels
 
             updateSummary();
 
+            // add record in database
+            await _transactionRepository.AddAsync(viewModel.crearedTransaction);
+
             ToastManager.Show("Add transaction successfully!!!", ToastType.Success, position: ToastPosition.Center, durationMs: 2000);
 
         }
 
         private void DeleteTransaction()
         {
-            if (SelectedTransaction != null)
+            var transactionToDelete = SelectedTransaction.toModel();
+            Transactions.Remove(SelectedTransaction);
+
+            updateSummary();
+
+            // delete record in database
+            if (transactionToDelete != null)
             {
-                Transactions.Remove(SelectedTransaction);
-                SelectedTransaction = null;
-                updateSummary();
+                _transactionRepository.DeleteAsync(transactionToDelete).ContinueWith(t =>
+                {
+                    if (t.IsFaulted)
+                    {
+                        // Handle the error
+                        Util.Log($"Error deleting transaction: {t.Exception?.Message}");
+                        ToastManager.Show("Error deleting transaction", ToastType.Error, position: ToastPosition.Center, durationMs: 2000);
+                    }
+                    else
+                    {
+                        ToastManager.Show("Delete transaction successfully!!!", ToastType.Success, position: ToastPosition.Center, durationMs: 2000);
+                    }
+                });
             }
         }
 
