@@ -17,8 +17,7 @@ namespace BudgetTracker.ViewModels
         public string Category { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public string Amount { get; set; } = string.Empty;
-        public TransactionType SelectedTransactionType { get; set; } = TransactionType.Expense; // Default to Expense
-
+        public string SelectedTransactionType { get; set; } = string.Empty;
         public ObservableCollection<string> Categories { get;} = new ObservableCollection<string>
         {
             "Food",

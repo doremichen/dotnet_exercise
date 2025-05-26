@@ -71,7 +71,7 @@ namespace BudgetTracker.ViewModels
             }
         }
 
-        public TransactionType TransactionType
+        public string TransactionType
         {
             get => _transaction.TransactionType;
             set

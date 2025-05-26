@@ -40,8 +40,8 @@ namespace BudgetTracker.ViewModels
             }
         }
 
-        public decimal TotalIncome => Transactions.Where(t => t.TransactionType == TransactionType.Income).Sum(t => t.Amount);
-        public decimal TotalExpense => Transactions.Where(t => t.TransactionType == TransactionType.Expense).Sum(t => t.Amount);
+        public decimal TotalIncome => Transactions.Where(t => t.TransactionType == TransactionType.Income.ToString()).Sum(t => t.Amount);
+        public decimal TotalExpense => Transactions.Where(t => t.TransactionType == TransactionType.Expense.ToString()).Sum(t => t.Amount);
         public decimal Balance => TotalIncome - TotalExpense;
 
         public ICommand AddCommand { get; }
@@ -99,20 +99,55 @@ namespace BudgetTracker.ViewModels
                 ToastManager.Show("Cancel edit transaction dialog!!!", ToastType.Error, position: ToastPosition.Center, durationMs: 2000);
                 return;
             }
+            bool flowControl = await updateUIAndDatabase(dialog);
+            if (!flowControl)
+            {
+                return;
+            }
+
+            // show toast
+            ToastManager.Show("Edit transaction successfully!!!", ToastType.Success, position: ToastPosition.Center, durationMs: 2000);
+
+
+        }
+
+        private async Task<bool> updateUIAndDatabase(AddTransactionDialog dialog)
+        {
             var viewModel = dialog.DataContext as EditTransactionViewModel;
             if (viewModel == null || viewModel.createdTransaction == null)
             {
                 ToastManager.Show("Edit transaction failed!!!", ToastType.Error, position: ToastPosition.Center, durationMs: 2000);
-                return;
+                return false;
             }
             Transaction updatedTransaction = viewModel.createdTransaction;
+
+            updateUI(updatedTransaction);
+
+            (bool flowControl, bool value) = await updateDb(updatedTransaction);
+            if (!flowControl)
+            {
+                return value;
+            }
+            return true;
+        }
+
+        private async Task<(bool flowControl, bool value)> updateDb(Transaction updatedTransaction)
+        {
+            Util.Log("update the transaction record!!!");
+            // update selected transaction
             var tranctionInDb = _transactionRepository.GetByIdAsync(updatedTransaction.Id).Result;
             if (tranctionInDb == null)
             {
                 ToastManager.Show("Transaction not found in database", ToastType.Error, position: ToastPosition.Center, durationMs: 2000);
-                return;
+                return (flowControl: false, value: false);
             }
+            tranctionInDb.UpdateFrom(updatedTransaction);
+            await _transactionRepository.UpdateAsync(updatedTransaction);
+            return (flowControl: true, value: default);
+        }
 
+        private void updateUI(Transaction updatedTransaction)
+        {
             // update the transaction in view model
             Application.Current.Dispatcher.Invoke(() =>
             {
@@ -128,17 +163,6 @@ namespace BudgetTracker.ViewModels
 
                 updateSummary();
             });
-
-            Util.Log("update the transaction record!!!");
-            // update selected transaction
-            
-            tranctionInDb.UpdateFrom(updatedTransaction);
-            await _transactionRepository.UpdateAsync(updatedTransaction);
-
-            // show toast
-            ToastManager.Show("Edit transaction successfully!!!", ToastType.Success, position: ToastPosition.Center, durationMs: 2000);
-
-
         }
 
         private async void AddTransaction()

@@ -16,7 +16,7 @@ namespace BudgetTracker.Models
         public string Category { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public decimal Amount { get; set; }
-        public TransactionType TransactionType { get; set; }
+        public string TransactionType { get; set; } = string.Empty;
 
         // <summary>
         // upate the current transaction with values from another transaction
