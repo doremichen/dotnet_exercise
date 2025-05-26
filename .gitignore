@@ -25,6 +25,9 @@ x64/
 *.vssscc
 .builds
 
+# data file
+*.db
+
 # Visual Studio profiler
 .vs/
 *.user
