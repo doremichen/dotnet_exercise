@@ -7,8 +7,11 @@ using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
+using System.Security.RightsManagement;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -51,6 +54,8 @@ namespace BudgetTracker.ViewModels
 
         public ICommand ExportCommand { get; }
 
+        public ICommand ImportCommand { get; }
+
         public MainViewModel()
         {
             Transactions = new ObservableCollection<TransactionViewModel>();
@@ -58,6 +63,8 @@ namespace BudgetTracker.ViewModels
             DeleteCommand = new RelayCommand(DeleteTransaction, () => SelectedTransaction != null);
             EditCommand = new RelayCommand(EditTransaction, () => SelectedTransaction != null);
             ExportCommand = new RelayCommand(ExportToCsv);
+            // Update the ImportCommand initialization to use an async void method instead of Task
+            ImportCommand = new RelayCommand(async () => await ImportFromCsv());
 
             // load transactions from database
             var allTransactions = _transactionRepository.GetAllAsync().Result;
@@ -78,6 +85,97 @@ namespace BudgetTracker.ViewModels
                 SelectedTransaction = null!;
             }
 
+        }
+
+        private async Task ImportFromCsv()
+        {
+            var openFileDialog = new OpenFileDialog
+            {
+                Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*",
+                DefaultExt = ".csv",
+                // FileName = {years}.csv
+                FileName = $"{DateTime.Now.Year}_transactions.csv"
+            };
+
+            // show dialog
+            if (openFileDialog.ShowDialog() == true)
+            {
+                try
+                {
+                    var lines = File.ReadAllLines(openFileDialog.FileName, Encoding.UTF8);
+
+                    if (lines.Length <= 1)
+                    {
+                        ToastManager.Show("No data in CSV file", ToastType.Error, position: ToastPosition.Center, durationMs: 2000);
+                        return;
+                    }
+
+                    var preview = new List<Transaction>();
+
+                    for (int i = 1; i < lines.Length; i++)
+                    {
+                        var fields = ParseCsvLine(lines[i]);
+
+                        if (fields.Length < 6)
+                            continue;
+
+                        if (!DateTime.TryParse(fields[1], out var date) ||
+                            !decimal.TryParse(fields[4], out var amount))
+                        {
+                            ToastManager.Show("Line {i + 1} format error!!!", ToastType.Error, position: ToastPosition.Center, durationMs: 2000);
+                            return;
+                        }
+
+                        preview.Add(new Transaction
+                        {
+                            Id = Guid.TryParse(fields[0], out var id) ? id : Guid.Empty,
+                            Date = date,
+                            Category = fields[2],
+                            Description = fields[3],
+                            Amount = amount,
+                            TransactionType = fields[5]
+                        });
+                    }
+
+                    // show summary information
+                    var result = MessageBox.Show(
+                        $"Will import {preview.Count} datas，to be continnue？",
+                        "preImport", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        // Clear data in database before import
+                        await _transactionRepository.ClearAllAsync();
+
+                        // Clear the existing transactions
+                        Transactions.Clear();
+
+                        foreach (var item in preview)
+                        {
+                            TransactionViewModel itemVm = new(item);
+                            // add to database
+                            await _transactionRepository.AddAsync(itemVm.toModel());
+                            Transactions.Add(itemVm);
+                        }
+
+                        ToastManager.Show("Success import CSV file！", ToastType.Success, ToastPosition.Center, 2000);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ToastManager.Show("Import fail：" + ex.Message, ToastType.Error, position: ToastPosition.Center, durationMs: 2000);
+                   
+                }
+            }
+
+        }
+        private string[] ParseCsvLine(string line)
+        {
+            var pattern = @"(?:^|,)(?:""(?<val>(?:[^""]|"""")*)""|(?<val>[^"",]*))";
+            var matches = Regex.Matches(line, pattern);
+            return matches.Cast<Match>()
+                          .Select(m => m.Groups["val"].Value.Replace("\"\"", "\""))
+                          .ToArray();
         }
 
         private void ExportToCsv()

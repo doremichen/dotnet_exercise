@@ -27,7 +27,12 @@ x64/
 
 # data file
 *.db
+*.db-shm
+*.db-wal
 
 # Visual Studio profiler
 .vs/
 *.user
+
+# bak file
+*.bak

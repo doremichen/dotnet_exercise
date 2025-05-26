@@ -13,10 +13,10 @@ A simple and user-friendly budgeting application to help users track daily incom
 - Record daily income and expenses
 - Support for income/expense categories
 - Managed data by database
+- Import/Export to CSV
 <!--
 - Monthly/Yearly visualized charts
-- Multi-currency support
-- Import/Export to CSV
+- Multi-currency suppo
 - Custom budget reminders
 -->
 ---

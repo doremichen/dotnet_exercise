@@ -14,5 +14,6 @@ namespace BudgetTracker.Data.Repositories
         Task AddAsync(Transaction transaction);
         Task DeleteAsync(Transaction transaction);
         Task UpdateAsync(Transaction transaction);
+        Task ClearAllAsync();
     }
 }

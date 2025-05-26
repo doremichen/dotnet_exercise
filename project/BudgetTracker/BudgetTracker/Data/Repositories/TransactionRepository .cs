@@ -51,5 +51,11 @@ namespace BudgetTracker.Data.Repositories
                 await _dbContext.SaveChangesAsync();
             }
         }
+
+        public async Task ClearAllAsync()
+        {
+            _dbContext.Transactions.RemoveRange(_dbContext.Transactions); // Assuming Transactions is a DbSet<Transaction> in your AppDbContext
+            await _dbContext.SaveChangesAsync(); // Save changes to the database
+        }
     }
 }
