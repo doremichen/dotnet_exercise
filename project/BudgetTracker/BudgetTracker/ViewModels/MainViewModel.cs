@@ -3,6 +3,7 @@ using BudgetTracker.Models;
 using BudgetTracker.Toast;
 using BudgetTracker.Utils;
 using BudgetTracker.Views;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -48,12 +49,15 @@ namespace BudgetTracker.ViewModels
         public ICommand DeleteCommand { get; }
         public ICommand EditCommand { get; }
 
+        public ICommand ExportCommand { get; }
+
         public MainViewModel()
         {
             Transactions = new ObservableCollection<TransactionViewModel>();
             AddCommand = new RelayCommand(AddTransaction);
             DeleteCommand = new RelayCommand(DeleteTransaction, () => SelectedTransaction != null);
             EditCommand = new RelayCommand(EditTransaction, () => SelectedTransaction != null);
+            ExportCommand = new RelayCommand(ExportToCsv);
 
             // load transactions from database
             var allTransactions = _transactionRepository.GetAllAsync().Result;
@@ -74,6 +78,58 @@ namespace BudgetTracker.ViewModels
                 SelectedTransaction = null!;
             }
 
+        }
+
+        private void ExportToCsv()
+        {
+            SaveFileDialog saveFileDialog = new SaveFileDialog
+            {
+                Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*",
+                DefaultExt = ".csv",
+                // FileName = {years}.csv
+                FileName = $"{DateTime.Now.Year}_transactions.csv"
+            };
+
+            // show dialog
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                try
+                {
+                    // write transactions to csv file
+                    using (var writer = new System.IO.StreamWriter(saveFileDialog.FileName, false, new System.Text.UTF8Encoding(encoderShouldEmitUTF8Identifier: true)))
+                    {
+                        // write header
+                        writer.WriteLine("Id,Date,Category,Description,Amount,TransactionType");
+                        // write each transaction
+                        foreach (var transaction in Transactions)
+                        {
+                            writer.WriteLine($"{transaction.id},{Escape(transaction.Date.ToString("yyyy-MM-dd"))},{Escape(transaction.Category)},{Escape(transaction.Description)},{transaction.Amount},{transaction.TransactionType}");
+                        }
+                    }
+                    ToastManager.Show("Export transactions to CSV successfully!!!", ToastType.Success, position: ToastPosition.Center, durationMs: 2000);
+
+                    // auto open the file after export
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = saveFileDialog.FileName,
+                        UseShellExecute = true
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Util.Log($"Error exporting transactions to CSV: {ex.Message}");
+                    ToastManager.Show("Error exporting transactions to CSV", ToastType.Error, position: ToastPosition.Center, durationMs: 2000);
+                }
+            }
+        }
+
+        private string Escape(string input)
+        {
+            if (input.Contains(",") || input.Contains("\""))
+            {
+                return $"\"{input.Replace("\"", "\"\"")}\"";
+            }
+            return input;
         }
 
         private async void EditTransaction()
