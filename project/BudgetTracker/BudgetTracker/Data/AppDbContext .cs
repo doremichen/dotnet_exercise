@@ -16,7 +16,7 @@ namespace BudgetTracker.Data
         // constructor
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
-            // Database.EnsureCreated(); // Uncomment this line if you want to create the database on startup
+            Database.EnsureCreated(); // Uncomment this line if you want to create the database on startup
         }
 
 

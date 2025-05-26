@@ -11,7 +11,7 @@ using System.Windows.Input;
 
 namespace BudgetTracker.ViewModels
 {
-    public class AddTransactionViewModel : BaseViewModel
+    public abstract class BaseTransactionViewModel : BaseViewModel
     {
         public DateTime Date { get; set; } = DateTime.Today;
         public string Category { get; set; } = string.Empty;
@@ -39,9 +39,9 @@ namespace BudgetTracker.ViewModels
         // confirm command
         public ICommand ConfirmCommand { get; }
 
-        public Transaction crearedTransaction { get; private set; } = null!;
+        public Transaction createdTransaction { get; private set; } = null!;
 
-        public AddTransactionViewModel()
+        public BaseTransactionViewModel()
         {
             ConfirmCommand = new RelayCommand(ConfirmTransaction);
         }
@@ -49,22 +49,9 @@ namespace BudgetTracker.ViewModels
         private void ConfirmTransaction()
         {
             Util.Log("ConfirmTransaction called");
-            if (!decimal.TryParse(Amount, out var amount))
-            {
-                // show invalid amount message
-                MessageBox.Show("Invalid amount. Please enter a valid number.");
-                return;
-            }
-            Util.Log($"Amount: {amount}");
-            crearedTransaction = new Transaction
-            {
-                Date = Date,
-                Category = Category,
-                Description = Description,
-                Amount = amount,
-                TransactionType = SelectedTransactionType
-            };
-            Util.Log($"Transaction created: {crearedTransaction}");
+
+            createdTransaction = getTransaction();
+            Util.Log($"Transaction: {createdTransaction}");
             // Close the dialog or perform any other action needed after confirmation
             var window = Application.Current.Windows.OfType<Window>().SingleOrDefault(x => x.IsActive);
             if (window != null)
@@ -73,5 +60,8 @@ namespace BudgetTracker.ViewModels
                 window.Close();
             }
         }
+
+        public abstract Transaction getTransaction();
+        
     }
 }

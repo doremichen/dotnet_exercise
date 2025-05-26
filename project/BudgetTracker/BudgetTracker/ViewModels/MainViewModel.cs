@@ -9,7 +9,9 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace BudgetTracker.ViewModels
 {
@@ -44,12 +46,14 @@ namespace BudgetTracker.ViewModels
 
         public ICommand AddCommand { get; }
         public ICommand DeleteCommand { get; }
+        public ICommand EditCommand { get; }
 
         public MainViewModel()
         {
             Transactions = new ObservableCollection<TransactionViewModel>();
             AddCommand = new RelayCommand(AddTransaction);
             DeleteCommand = new RelayCommand(DeleteTransaction, () => SelectedTransaction != null);
+            EditCommand = new RelayCommand(EditTransaction, () => SelectedTransaction != null);
 
             // load transactions from database
             var allTransactions = _transactionRepository.GetAllAsync().Result;
@@ -69,6 +73,71 @@ namespace BudgetTracker.ViewModels
             {
                 SelectedTransaction = null!;
             }
+
+        }
+
+        private async void EditTransaction()
+        {
+            // check selected transaction is null or not
+            if (SelectedTransaction == null)
+            {
+                ToastManager.Show("Please select a transaction to edit", ToastType.Error, position: ToastPosition.Center, durationMs: 2000);
+                return;
+            }
+            Util.Log("show edit transaction dialog");
+            var dialog = new AddTransactionDialog()
+            {
+                Title = "Edit Transaction",
+                DataContext = new EditTransactionViewModel(SelectedTransaction.toModel())
+            };
+
+            var result = dialog.ShowDialog();
+            Util.Log($"dialog result: {result}");
+            if (result == false)
+            {
+                Util.Log("dialog result is false, return");
+                ToastManager.Show("Cancel edit transaction dialog!!!", ToastType.Error, position: ToastPosition.Center, durationMs: 2000);
+                return;
+            }
+            var viewModel = dialog.DataContext as EditTransactionViewModel;
+            if (viewModel == null || viewModel.createdTransaction == null)
+            {
+                ToastManager.Show("Edit transaction failed!!!", ToastType.Error, position: ToastPosition.Center, durationMs: 2000);
+                return;
+            }
+            Transaction updatedTransaction = viewModel.createdTransaction;
+            var tranctionInDb = _transactionRepository.GetByIdAsync(updatedTransaction.Id).Result;
+            if (tranctionInDb == null)
+            {
+                ToastManager.Show("Transaction not found in database", ToastType.Error, position: ToastPosition.Center, durationMs: 2000);
+                return;
+            }
+
+            // update the transaction in view model
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                // update the transaction in view model
+                Util.Log("update the transaction in view model");
+                var transaction = this.Transactions.FirstOrDefault(t => t.toModel().Id == updatedTransaction.Id);
+                if (transaction == null)
+                {
+                    ToastManager.Show("Transaction not found in transactions list", ToastType.Error, position: ToastPosition.Center, durationMs: 2000);
+                    return;
+                }
+                transaction.UpdateFrom(updatedTransaction);
+
+                updateSummary();
+            });
+
+            Util.Log("update the transaction record!!!");
+            // update selected transaction
+            
+            tranctionInDb.UpdateFrom(updatedTransaction);
+            await _transactionRepository.UpdateAsync(updatedTransaction);
+
+            // show toast
+            ToastManager.Show("Edit transaction successfully!!!", ToastType.Success, position: ToastPosition.Center, durationMs: 2000);
+
 
         }
 
@@ -92,17 +161,17 @@ namespace BudgetTracker.ViewModels
 
             Util.Log("checking dialog viewmodel");
             var viewModel = dialog.DataContext as AddTransactionViewModel;
-            if (viewModel == null || viewModel.crearedTransaction == null)
+            if (viewModel == null || viewModel.createdTransaction == null)
                 return;
             Util.Log("add new transaction");
-            var newTransaction = new TransactionViewModel(viewModel.crearedTransaction);
+            var newTransaction = new TransactionViewModel(viewModel.createdTransaction);
             Transactions.Add(newTransaction);
             SelectedTransaction = newTransaction;
 
             updateSummary();
 
             // add record in database
-            await _transactionRepository.AddAsync(viewModel.crearedTransaction);
+            await _transactionRepository.AddAsync(viewModel.createdTransaction);
 
             ToastManager.Show("Add transaction successfully!!!", ToastType.Success, position: ToastPosition.Center, durationMs: 2000);
 
@@ -133,6 +202,7 @@ namespace BudgetTracker.ViewModels
                 });
             }
         }
+
 
         private void updateSummary()
         {

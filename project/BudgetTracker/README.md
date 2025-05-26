@@ -11,8 +11,9 @@ A simple and user-friendly budgeting application to help users track daily incom
 
 ## Key Features
 - Record daily income and expenses
-<!-- 
 - Support for income/expense categories
+- Managed data by database
+<!--
 - Monthly/Yearly visualized charts
 - Multi-currency support
 - Import/Export to CSV
@@ -23,9 +24,7 @@ A simple and user-friendly budgeting application to help users track daily incom
 ## Tech Stack
 - Platform: .NET WPF
 - Language: C#
-<!-- 
-- Data Storage: SQLite or local JSON
--->
+- Data Storage: SQLite
 - UI Architecture: MVVM Pattern
 
 ---

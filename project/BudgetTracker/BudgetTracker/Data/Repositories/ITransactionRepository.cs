@@ -13,5 +13,6 @@ namespace BudgetTracker.Data.Repositories
         Task<Transaction?> GetByIdAsync(Guid id);
         Task AddAsync(Transaction transaction);
         Task DeleteAsync(Transaction transaction);
+        Task UpdateAsync(Transaction transaction);
     }
 }

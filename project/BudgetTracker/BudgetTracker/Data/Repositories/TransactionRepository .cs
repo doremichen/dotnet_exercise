@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace BudgetTracker.Data.Repositories
 {
@@ -39,6 +40,16 @@ namespace BudgetTracker.Data.Repositories
         public async Task<Transaction?> GetByIdAsync(Guid id)
         {
             return await _dbContext.Transactions.FindAsync(id); // Assuming Transactions is a DbSet<Transaction> in your AppDbContext
+        }
+
+        public async Task UpdateAsync(Transaction transaction)
+        {
+            var existing = await _dbContext.Transactions.FindAsync(transaction.Id);
+            if (existing != null)
+            {
+                _dbContext.Entry(existing).CurrentValues.SetValues(transaction);
+                await _dbContext.SaveChangesAsync();
+            }
         }
     }
 }

@@ -5,11 +5,15 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:BudgetTracker" 
         xmlns:vm="clr-namespace:BudgetTracker.ViewModels"
+        xmlns:conv="clr-namespace:BudgetTracker.converter"
         mc:Ignorable="d"
-        Title="Accounting Book" Height="450" Width="800" Loaded="Window_Loaded">
+        Title="Accounting Book" Height="459" Width="877" Loaded="Window_Loaded">
     <Window.DataContext>
         <vm:MainViewModel />
     </Window.DataContext>
+    <Window.Resources>
+        <conv:NullToBoolConverter x:Key="NullToBoolConverter" />
+    </Window.Resources>
     <DockPanel Margin="10">
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0 0 0 10">
             <TextBlock Text="Income：" FontWeight="Bold" />
@@ -35,8 +39,19 @@
         </DataGrid>
 
         <StackPanel Orientation="Horizontal" Height="367">
-            <Button Content="Add" Command="{Binding AddCommand}" Width="80" Margin="0 0 10 0" Height="349"/>
-            <Button Content="Delete" Command="{Binding DeleteCommand}" Width="80" Height="346"/>
+            <Button Content="Add"
+            Command="{Binding AddCommand}"
+            Width="80" Margin="0 0 10 0" Height="349" />
+
+            <Button Content="Edit"
+            Command="{Binding EditCommand}"
+            Width="80" Margin="0 0 10 0" Height="349"
+            IsEnabled="{Binding SelectedTransaction, Converter={StaticResource NullToBoolConverter}}" />
+
+            <Button Content="Delete"
+            Command="{Binding DeleteCommand}"
+            Width="80" Height="346"/>
         </StackPanel>
+
     </DockPanel>
 </Window>

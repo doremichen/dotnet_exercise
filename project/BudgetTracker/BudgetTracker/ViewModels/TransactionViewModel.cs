@@ -1,4 +1,5 @@
 ﻿using BudgetTracker.Models;
+using BudgetTracker.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -52,7 +53,7 @@ namespace BudgetTracker.ViewModels
                 if (_transaction.Description != value)
                 {
                     _transaction.Description = value;
-                    OnPropertyChanged(nameof(Description));
+                    OnPropertyChanged();
                 }
             }
         }
@@ -65,7 +66,7 @@ namespace BudgetTracker.ViewModels
                 if (_transaction.Amount != value)
                 {
                     _transaction.Amount = value;
-                    OnPropertyChanged(nameof(Amount));
+                    OnPropertyChanged();
                 }
             }
         }
@@ -78,7 +79,7 @@ namespace BudgetTracker.ViewModels
                 if (_transaction.TransactionType != value)
                 {
                     _transaction.TransactionType = value;
-                    OnPropertyChanged(nameof(TransactionType));
+                    OnPropertyChanged();
                 }
             }
         }
@@ -86,6 +87,23 @@ namespace BudgetTracker.ViewModels
         public Transaction toModel()
         {
             return _transaction;
+        }
+
+        // update transaction
+        public void UpdateFrom(Transaction updated)
+        {
+            Date = updated.Date;
+            Category = updated.Category;
+            Description = updated.Description;
+            Amount = updated.Amount;
+            TransactionType = updated.TransactionType;
+
+            // update UI
+            OnPropertyChanged(nameof(Date));
+            OnPropertyChanged(nameof(Category));
+            OnPropertyChanged(nameof(Description));
+            OnPropertyChanged(nameof(Amount));
+            OnPropertyChanged(nameof(TransactionType));
         }
     }
 }
