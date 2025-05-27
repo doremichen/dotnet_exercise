@@ -56,6 +56,8 @@ namespace BudgetTracker.ViewModels
 
         public ICommand ImportCommand { get; }
 
+        public ICommand ViewStaticsDataCommand { get; }
+
         public MainViewModel()
         {
             Transactions = new ObservableCollection<TransactionViewModel>();
@@ -65,26 +67,40 @@ namespace BudgetTracker.ViewModels
             ExportCommand = new RelayCommand(ExportToCsv);
             // Update the ImportCommand initialization to use an async void method instead of Task
             ImportCommand = new RelayCommand(async () => await ImportFromCsv());
+            ViewStaticsDataCommand = new RelayCommand(ViewStaticsData());
+            LoadDataSet();
 
+        }
+
+        private static Action ViewStaticsData()
+        {
+            return () =>
+            {
+                Util.Log("show statistics view");
+                var statisticsView = new StatisticsView();
+                statisticsView.Show();
+            };
+        }
+
+        private void LoadDataSet()
+        {
             // load transactions from database
             var allTransactions = _transactionRepository.GetAllAsync().Result;
+            RefreshTransactionList(allTransactions);
+
+            // set selected transaction to first transaction in list
+            SelectedTransaction = (Transactions.Count > 0) ? Transactions[0] : null!;
+
+        }
+
+        private void RefreshTransactionList(IEnumerable<Transaction> allTransactions)
+        {
             Transactions.Clear();
 
             foreach (var transaction in allTransactions)
             {
                 Transactions.Add(new TransactionViewModel(transaction));
             }
-
-            // set selected transaction to first transaction in list
-            if (Transactions.Count > 0)
-            {
-                SelectedTransaction = Transactions[0];
-            }
-            else
-            {
-                SelectedTransaction = null!;
-            }
-
         }
 
         private async Task ImportFromCsv()
@@ -184,8 +200,8 @@ namespace BudgetTracker.ViewModels
             {
                 Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*",
                 DefaultExt = ".csv",
-                // FileName = {years}.csv
-                FileName = $"{DateTime.Now.Year}_transactions.csv"
+                // FileName = {years_month_day}.csv
+                FileName = $"{DateTime.Now:yyyy_MM_dd}_transactions.csv"
             };
 
             // show dialog
@@ -355,7 +371,7 @@ namespace BudgetTracker.ViewModels
 
         }
 
-        private void DeleteTransaction()
+        private async void DeleteTransaction()
         {
             var transactionToDelete = SelectedTransaction.toModel();
             Transactions.Remove(SelectedTransaction);
@@ -365,19 +381,20 @@ namespace BudgetTracker.ViewModels
             // delete record in database
             if (transactionToDelete != null)
             {
-                _transactionRepository.DeleteAsync(transactionToDelete).ContinueWith(t =>
+                // delete record in database
+                if (transactionToDelete != null)
                 {
-                    if (t.IsFaulted)
+                    try
                     {
-                        // Handle the error
-                        Util.Log($"Error deleting transaction: {t.Exception?.Message}");
-                        ToastManager.Show("Error deleting transaction", ToastType.Error, position: ToastPosition.Center, durationMs: 2000);
-                    }
-                    else
-                    {
+                        await _transactionRepository.DeleteAsync(transactionToDelete);
                         ToastManager.Show("Delete transaction successfully!!!", ToastType.Success, position: ToastPosition.Center, durationMs: 2000);
                     }
-                });
+                    catch (Exception ex)
+                    {
+                        Util.Log($"Error deleting transaction: {ex.Message}");
+                        ToastManager.Show("Error deleting transaction", ToastType.Error, position: ToastPosition.Center, durationMs: 2000);
+                    }
+                }
             }
         }
 

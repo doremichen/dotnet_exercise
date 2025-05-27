@@ -14,6 +14,7 @@ A simple and user-friendly budgeting application to help users track daily incom
 - Support for income/expense categories
 - Managed data by database
 - Import/Export to CSV
+- Monthly/Yearly visualized charts
 <!--
 - Monthly/Yearly visualized charts
 - Multi-currency suppo
