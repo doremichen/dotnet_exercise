@@ -40,6 +40,7 @@ namespace BudgetTracker.ViewModels
                     OnPropertyChanged(nameof(SelectedTransaction));
 
                     (DeleteCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                    (EditCommand as RelayCommand)?.RaiseCanExecuteChanged();
                 }
             }
         }
