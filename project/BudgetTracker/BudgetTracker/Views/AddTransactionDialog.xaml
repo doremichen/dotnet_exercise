@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:BudgetTracker.Views"
         mc:Ignorable="d"
         Title="AddTransactionDialog" Height="450" Width="800">
-    <Grid Margin="10">
+    <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -16,36 +16,35 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
 
         <!-- 日期 -->
-        <Label Content="Date：" Grid.Row="0"/>
-        <DatePicker Grid.Row="0" Margin="60,0,0,0" SelectedDate="{Binding Date}" />
+        <Label Grid.Row="0" Grid.Column="0" Content="Date：" VerticalAlignment="Center" Margin="0,5"/>
+        <DatePicker Grid.Row="0" Grid.Column="1" SelectedDate="{Binding Date}" Margin="5"/>
 
         <!-- 類別 -->
-        <Label Content="Categories：" Grid.Row="1" />
-        <ComboBox Grid.Row="1" Margin="60,0,0,0"
-                  ItemsSource="{Binding Categories}"
-                  SelectedItem="{Binding Category}" />
+        <Label Grid.Row="1" Grid.Column="0" Content="Category：" VerticalAlignment="Center" Margin="0,5"/>
+        <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding Categories}" SelectedItem="{Binding Category}" Margin="5"/>
 
         <!-- 描述 -->
-        <Label Content="Description：" Grid.Row="2" />
-        <TextBox Grid.Row="2" Margin="60,0,0,0" Text="{Binding Description}" />
+        <Label Grid.Row="2" Grid.Column="0" Content="Description：" VerticalAlignment="Center" Margin="0,5"/>
+        <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Description}" Margin="5"/>
 
         <!-- 金額 -->
-        <Label Content="Amount：" Grid.Row="3" />
-        <TextBox Grid.Row="3" Margin="60,0,0,0" Text="{Binding Amount}" />
+        <Label Grid.Row="3" Grid.Column="0" Content="Amount：" VerticalAlignment="Center" Margin="0,5"/>
+        <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding Amount}" Margin="5"/>
 
         <!-- 類型 -->
-        <Label Content="Type：" Grid.Row="4" />
-        <ComboBox Grid.Row="4" Margin="60,0,0,0"
-                  ItemsSource="{Binding TransactionTypes}"
-                  SelectedItem="{Binding SelectedTransactionType}" />
+        <Label Grid.Row="4" Grid.Column="0" Content="Type：" VerticalAlignment="Center" Margin="0,5"/>
+        <ComboBox Grid.Row="4" Grid.Column="1" ItemsSource="{Binding TransactionTypes}" SelectedItem="{Binding SelectedTransactionType}" Margin="5"/>
 
         <!-- 按鈕 -->
-        <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
-            <Button Content="Confirm" Width="80" Margin="0,0,10,0"  IsDefault="True" Command="{Binding ConfirmCommand}" />
+        <StackPanel Grid.Row="6" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+            <Button Content="Confirm" Width="80" Margin="0,0,10,0" IsDefault="True" Command="{Binding ConfirmCommand}" />
             <Button Content="Cancel" Width="80" IsCancel="True" />
         </StackPanel>
-
     </Grid>
 </Window>
