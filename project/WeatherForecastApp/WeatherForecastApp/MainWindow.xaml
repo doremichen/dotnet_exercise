@@ -1,0 +1,86 @@
+﻿<Window x:Class="WeatherForecastApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WeatherForecastApp" 
+        xmlns:viewmodels="clr-namespace:WeatherForecastApp.ViewModels" 
+        d:DataContext="{d:DesignInstance Type=viewmodels:WeatherViewModel}"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="800" Width="800" Loaded="Window_Loaded">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <!-- Current Weather -->
+            <RowDefinition Height="Auto"/>
+            <!-- Separator Line -->
+            <RowDefinition Height="*"/>
+            <!-- Future Weather -->
+        </Grid.RowDefinitions>
+
+        <!-- 
+           The weather icon can not download from the internet. the reson is as following:
+           Network error: Error: The SSL connection could not be established, see inner exception.
+           Inner Exception: Authentication failed because the remote party sent a TLS alert: 'ProtocolVersion'.
+           I don't know how to fix it at this moment. so use github icon instead.
+           https://github.com/rodrigokamada/openweathermap/tree/master
+        -->
+        <!-- Current Weather Section -->
+        <Border BorderBrush="Gray" BorderThickness="1" Padding="5" Margin="0,0,0,5">
+
+            <StackPanel Grid.Row="0" Margin="0,0,0,10">
+                <Image Source="pack://application:,,,/Images/Title.png" Width="50" Height="50" Margin="0,5,0,5"/>
+                
+                <TextBox Text="{Binding City, UpdateSourceTrigger=PropertyChanged}" Width="200" Height="30" />
+                <Button Command="{Binding FetchWeatherCommand}" Content="Get Weather" Width="200" Height="30" Margin="0,5,0,5"/>
+                <TextBlock Text="{Binding CurrentWeather.Location}" FontSize="20" FontWeight="Bold"/>
+                <TextBlock Text="{Binding CurrentWeather.DateTime, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" FontSize="16"/>
+                <TextBlock Text="{Binding CurrentWeather.Temperature, StringFormat='Temperature: {0}°C'}" FontSize="16"/>
+                <TextBlock Text="{Binding CurrentWeather.Humidity, StringFormat='Humidity: {0}%'}" FontSize="16"/>
+                <TextBlock Text="{Binding CurrentWeather.WindSpeed, StringFormat='Wind Speed: {0} m/s'}" FontSize="16"/>
+
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,5,0,0" Background="Yellow">
+                    <!-- 
+                    <Image Source="{Binding CurrentWeather.WeatherCondition, Converter={StaticResource WeatherToIconConverter}}" Width="40" Height="40" Margin="0,0,10,0"/>
+                    -->
+                    <!-- Weather icon and GitHub icon with TextBlock for weather condition -->
+                    <Image Source="{Binding CurrentWeather.GithubIconUrl}" Width="40" Height="40" Margin="0,0,10,0"/>
+                    <TextBlock Text="{Binding CurrentWeather.WeatherCondition}" FontSize="16" VerticalAlignment="Center"/>
+                </StackPanel>
+                <!-- Button to test network connection 
+                    <Button Content="Test net work!!!" Click="TestNetwork_Click" Width="120" Height="30" Margin="0,10,0,0"/>
+                -->
+     
+            </StackPanel>
+        </Border>
+        <!-- seperator line -->
+        <Border Grid.Row="1" Height="5" Background="Gray" Margin="0,10,0,10"/>
+        <!-- Future Weather Section with ScrollViewer -->
+        
+            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding FutureWeather}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border BorderBrush="Gray" BorderThickness="1" Padding="5" Margin="0,0,0,5">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Location}" FontWeight="Bold"/>
+                                    <TextBlock Text="{Binding DateTime, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}"/>
+                                    <TextBlock Text="{Binding Temperature, StringFormat='Temperature: {0}°C'}"/>
+
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,5,0,0" Background="Yellow">
+                                    <!-- 
+                                    <Image Source="{Binding WeatherCondition, Converter={StaticResource WeatherToIconConverter}}" Width="40" Height="40" Margin="0,0,10,0"/>
+                                    -->
+                                    <!-- Weather icon and GitHub icon with TextBlock for weather condition -->
+                                    <Image Source="{Binding GithubIconUrl}" Width="40" Height="40" Margin="0,0,10,0"/>
+                                    <TextBlock Text="{Binding WeatherCondition}" FontSize="16" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        
+    </Grid>
+</Window>
