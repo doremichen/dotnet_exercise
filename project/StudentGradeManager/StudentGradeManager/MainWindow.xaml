@@ -14,6 +14,8 @@
             <Button Content="新增成績" Command="{Binding AddGradeCommand}"/>
             <Button Content="編輯成績" Command="{Binding EditGradeCommand}" Margin="5,0"/>
             <Button Content="刪除成績" Command="{Binding RemoveGradeCommand}" Margin="5,0"/>
+            <Button Content="統計圖表" Command="{Binding ShowStatisticsCommand}" Margin="5,0"/>
+            <Button Content="匯出成績 CSV" Command="{Binding ExportCsvCommand}" Margin="5,0"/>
         </StackPanel>
         
         <Grid Margin="10">

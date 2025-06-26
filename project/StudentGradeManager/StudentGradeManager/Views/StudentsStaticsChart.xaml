@@ -1,0 +1,44 @@
+﻿<Window x:Class="StudentGradeManager.Views.StutentsStaticsChart"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:StudentGradeManager.Views" 
+        xmlns:chart="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
+        mc:Ignorable="d"
+        Title="統計圖表" Height="450" Width="800">
+    <Grid Margin="10">
+        <TabControl>
+            <TabItem Header="平均分數">
+                <chart:CartesianChart Series="{Binding AverageSeries}" LegendLocation="Right">
+                    <chart:CartesianChart.AxisX>
+                        <chart:Axis Title="學生" Labels="{Binding StudentNames}" />
+                    </chart:CartesianChart.AxisX>
+                    <chart:CartesianChart.AxisY>
+                        <chart:Axis Title="分數" />
+                    </chart:CartesianChart.AxisY>
+                </chart:CartesianChart>
+            </TabItem>
+            <TabItem Header="最高分">
+                <chart:CartesianChart Series="{Binding MaxSeries}" LegendLocation="Right">
+                    <chart:CartesianChart.AxisX>
+                        <chart:Axis Title="學生" Labels="{Binding StudentNames}" />
+                    </chart:CartesianChart.AxisX>
+                    <chart:CartesianChart.AxisY>
+                        <chart:Axis Title="分數" />
+                    </chart:CartesianChart.AxisY>
+                </chart:CartesianChart>
+            </TabItem>
+            <TabItem Header="最低分">
+                <chart:CartesianChart Series="{Binding MinSeries}" LegendLocation="Right">
+                    <chart:CartesianChart.AxisX>
+                        <chart:Axis Title="學生" Labels="{Binding StudentNames}" />
+                    </chart:CartesianChart.AxisX>
+                    <chart:CartesianChart.AxisY>
+                        <chart:Axis Title="分數" />
+                    </chart:CartesianChart.AxisY>
+                </chart:CartesianChart>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>

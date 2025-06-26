@@ -3,6 +3,8 @@
  * Author: Adam Chen
  * Date: 2025-06-26
  */
+using LiveCharts;
+using LiveCharts.Wpf;
 using StudentGradeManager.Commands;
 using StudentGradeManager.Data;
 using StudentGradeManager.Models;
@@ -39,6 +41,11 @@ namespace StudentGradeManager.ViewModels
         public ICommand EditGradeCommand { get; }
         // Remove Grade ICommand
         public ICommand RemoveGradeCommand { get; }
+        // show statistics ICommand
+        public ICommand ShowStatisticsCommand { get; }
+        // export CSV ICommand
+        public ICommand ExportCsvCommand { get; }
+
 
         // AppDbContext for database operations
         private AppDbContext _dbContext = new AppDbContext();
@@ -119,6 +126,94 @@ namespace StudentGradeManager.ViewModels
             AddGradeCommand = new RelayCommand(_ => OpenGradeDialog(), _ => SelectedStudent != null);
             EditGradeCommand = new RelayCommand(_ => EditGrade(), _ => SelectedGrade != null); 
             RemoveGradeCommand = new RelayCommand(_ => RemoveGrade(), _ => SelectedGrade != null);
+            ShowStatisticsCommand = new RelayCommand(_ => ShowStatistics(), _ => SelectedStudent != null);
+            ExportCsvCommand = new RelayCommand(_ => ExportToCsv(), _ => Students.Count > 0);
+        }
+
+        private void ExportToCsv()
+        {
+            // new save file dialog to export CSV
+            var saveFileDialog = new Microsoft.Win32.SaveFileDialog
+            {
+                FileName = "StudentGrades.csv",
+                DefaultExt = ".csv",
+                Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*"
+            };
+
+            // show the save file dialog and check if the user clicked OK
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                try
+                {
+                    // create a StringBuilder to build the CSV content
+                    var csvContent = new StringBuilder();
+                    // add header row
+                    csvContent.AppendLine("學生ID,姓名,班級,科目,分數");
+                    // iterate through each student and their grades
+                    foreach (var student in Students)
+                    {
+                        foreach (var grade in student.Grades)
+                        {
+                            csvContent.AppendLine($"{student.StudentId},{student.Name},{student.ClassName},{grade.Subject},{grade.Score}");
+                        }
+                    }
+                    // write the CSV content to the selected file
+                    System.IO.File.WriteAllText(saveFileDialog.FileName, csvContent.ToString(), new UTF8Encoding(true));
+                    Debug.WriteLine($"CSV exported successfully to {saveFileDialog.FileName}");
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error exporting CSV: {ex.Message}");
+                }
+            }
+        }
+
+        private void ShowStatistics()
+        {
+            var studentsCopy = Students.Select(s => new
+            {
+                s.Name,
+                Avg = s.AverageScore,
+                Max = s.Grades.Count > 0 ? s.Grades.Max(g => g.Score) : 0,
+                Min = s.Grades.Count > 0 ? s.Grades.Min(g => g.Score) : 0,
+            }).ToList();
+
+            // statisticsViewModel to show statistics
+            var viewModel = new StatisticsViewModel(studentsCopy.Select(s => s.Name).ToList())
+            {
+                AverageSeries = new SeriesCollection
+                {
+                    new ColumnSeries
+                    {
+                        Title = "平均分數",
+                        Values = new ChartValues<double>(studentsCopy.Select(s => s.Avg))
+                    }
+                },
+                
+                MaxSeries = new SeriesCollection
+                {
+                    new ColumnSeries
+                    {
+                        Title = "最高分",
+                        Values = new ChartValues<double>(studentsCopy.Select(s => s.Max))
+                    }
+                },
+                MinSeries = new SeriesCollection
+                {
+                    new ColumnSeries
+                    {
+                        Title = "最低分",
+                        Values = new ChartValues<double>(studentsCopy.Select(s => s.Min))
+                    }
+                }
+            };
+
+            // show statistics window
+            var statisticsWindow = new Views.StutentsStaticsChart();
+            statisticsWindow.DataContext = viewModel;
+            // show the statistics window as a dialog
+            statisticsWindow.ShowDialog();
+
         }
 
         private void RemoveGrade()
