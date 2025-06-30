@@ -1,0 +1,9 @@
+﻿<UserControl x:Class="BeautyBookingApp.Views.ServiceListView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:models="clr-namespace:BeautyBookingApp.Models"
+             Height="400" Width="700">
+    <Grid Margin="20">
+        <ListBox x:Name="ServiceListBox" DisplayMemberPath="Name" SelectionChanged="ServiceListBox_SelectionChanged"/>
+    </Grid>
+</UserControl>
