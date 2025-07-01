@@ -1,4 +1,5 @@
 ﻿using BeautyBookingApp.Models;
+using BeautyBookingApp.Services;
 using BeautyBookingApp.Views;
 using System.Text;
 using System.Windows;
@@ -37,6 +38,24 @@ namespace BeautyBookingApp
 
         private void OnLoginSucceeded(string username)
         {
+            // Load upcoming booking at tomorrow from BookingService
+            var upcomingBookings = BookingService.GetUpcomingBookings(DateTime.Now.AddDays(1));
+            if (upcomingBookings != null && upcomingBookings.Count > 0)
+            {
+                // Show a notification or message box with the upcoming bookings
+                string message = "即將到來的預約：\n";
+                foreach (var booking in upcomingBookings)
+                {
+                    message += $"{booking.ClientName} - {booking.Service?.Name} - {booking.BookingTime}\n";
+                }
+                MessageBox.Show(message, "即將到來的預約", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            else
+            {
+                MessageBox.Show("沒有即將到來的預約。", "即將到來的預約", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+
+
             ShowMainMenu(username);
         }
 
@@ -115,6 +134,7 @@ namespace BeautyBookingApp
             {
                 ShowBookingView(service);
             };
+            serviceListView.BackToMenu += () => ShowMainMenu(_currentUsername);
 
             MainContainer.Children.Clear();
             MainContainer.Children.Add(serviceListView);

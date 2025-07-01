@@ -12,7 +12,7 @@
             <!-- 回主畫面按鈕 -->
         </Grid.RowDefinitions>
 
-        <TextBlock Text="我的預約紀錄"
+        <TextBlock Text="預約紀錄"
                    FontSize="20"
                    FontWeight="Bold"
                    Margin="0,0,0,10"

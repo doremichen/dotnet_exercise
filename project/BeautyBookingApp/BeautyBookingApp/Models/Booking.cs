@@ -18,6 +18,8 @@ namespace BeautyBookingApp.Models
         public string ClientName { get; set; } = string.Empty;
         public ServiceItem? Service { get; set; }
         public DateTime BookingTime { get; set; }
+        // notified when booking time is achieved
+        public bool IsNotified { get; set; } = false; // 是否已經通知過
 
         public string DisplayTitle => $"{BookingTime:yyyy/MM/dd HH:mm} ｜ {Service?.Name}";
         public string DisplayDetail => $"價格：NT$ {Service?.Price}，用戶：{ClientName}";

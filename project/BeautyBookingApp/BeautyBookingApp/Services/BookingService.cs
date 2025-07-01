@@ -110,5 +110,21 @@ namespace BeautyBookingApp.Services
                 Debug.WriteLine(booking);
             }
         }
+
+        /**
+         * get all upcoming bookings after the given dateTime
+         */
+        internal static List<Models.Booking> GetUpcomingBookings(DateTime dateTime)
+        {
+
+            DumpBookingsToConsole();
+
+            // get all bookings that are after the given dateTime
+            var bookings = LoadBookings();
+            return bookings
+                .Where(b => b.BookingTime.Date == dateTime.Date)
+                .OrderBy(b => b.BookingTime)
+                .ToList();
+        }
     }
 }

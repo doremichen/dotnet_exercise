@@ -29,6 +29,8 @@ namespace BeautyBookingApp.Views
 
         public event Action<ServiceItem>? ServiceSelected;
 
+        public event Action? BackToMenu;
+
         public ServiceListView()
         {
             InitializeComponent();
@@ -50,6 +52,12 @@ namespace BeautyBookingApp.Views
                 ServiceSelected?.Invoke(selectedService);
             }
 
+        }
+
+        private void Back_Click(object sender, RoutedEventArgs e)
+        {
+            // Raise the event to notify that the user wants to go back
+            BackToMenu?.Invoke();
         }
     }
 }
