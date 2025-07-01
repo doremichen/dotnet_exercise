@@ -57,7 +57,8 @@ namespace BeautyBookingApp.Views
             // save booking information by BookingService
             BookingService.SaveBooking(new Booking
             {
-                Username = _username,
+                StaffUsername = _username,
+                ClientName = clientNameInput.Text.Trim(),
                 Service = _service,
                 BookingTime = bookingTime
             });

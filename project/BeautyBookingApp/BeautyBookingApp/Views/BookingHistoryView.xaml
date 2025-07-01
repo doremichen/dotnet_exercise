@@ -21,7 +21,9 @@
         <ListBox x:Name="BookingListBox"
          Grid.Row="1"
          Margin="0,0,0,10"
-         SelectionMode="Extended">
+         SelectionMode="Extended"
+         PreviewMouseLeftButtonDown="BookingListBox_MouseDown"
+         PreviewMouseLeftButtonUp="BookingListBox_MouseUp">
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <StackPanel Orientation="Vertical" Margin="5">

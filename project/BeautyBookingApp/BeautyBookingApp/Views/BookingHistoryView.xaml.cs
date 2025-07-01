@@ -43,7 +43,7 @@ namespace BeautyBookingApp.Views
 
         private void LoadBookings()
         {
-            _bookings = BookingService.GetUserBookings(_username);
+            _bookings = BookingService.LoadBookings();
 
             BookingListBox.ItemsSource = _bookings;
 
@@ -92,6 +92,73 @@ namespace BeautyBookingApp.Views
 
             MessageBox.Show("預約已成功刪除！");
             LoadBookings();
+        }
+
+        private DateTime _mouseDownTime;
+        private object _pressedItem;
+
+        //private object? _pressedItem;
+        private const int LongPressThresholdMs = 800;
+
+        private void BookingListBox_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            // 記錄按下時間和項目
+            _mouseDownTime = DateTime.Now;
+
+            var listBoxItem = VisualUpwardSearch<ListBoxItem>(e.OriginalSource as DependencyObject);
+            if (listBoxItem != null)
+            {
+                _pressedItem = listBoxItem.DataContext;
+            }
+            else
+            {
+                _pressedItem = null;
+            }
+
+        }
+
+        // 輔助函式：往上找到 ListBoxItem
+        private static T? VisualUpwardSearch<T>(DependencyObject? source) where T : DependencyObject
+        {
+            while (source != null && source is not T)
+                source = VisualTreeHelper.GetParent(source);
+            return source as T;
+        }
+
+        private void BookingListBox_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            var pressDuration = DateTime.Now - _mouseDownTime;
+
+            if (pressDuration.TotalMilliseconds >= LongPressThresholdMs && _pressedItem is Booking selectedBooking)
+            {
+                OpenEditDialog(selectedBooking);
+            }
+
+            _pressedItem = null;
+        }
+
+        private void OpenEditDialog(Booking selectedBooking)
+        {
+            var editView = new BookingEditView(selectedBooking);
+            editView.BookingUpdated += () =>
+            {
+                MessageBox.Show("預約修改完成！");
+                LoadBookings();
+            };
+
+            var window = new Window
+            {
+                Title = "編輯預約",
+                Content = editView,
+                Width = 350,
+                Height = 400,
+                WindowStartupLocation = WindowStartupLocation.CenterScreen
+            };
+
+            // close the edit view when closed
+            editView.CloseAction = () => window.Close();
+
+            window.ShowDialog();
         }
     }
 }

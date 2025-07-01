@@ -7,6 +7,7 @@ using BeautyBookingApp.Models;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -45,7 +46,7 @@ namespace BeautyBookingApp.Services
         {
             var bookings = LoadBookings();
             return bookings
-                .Where(b => b.Username.Equals(username, StringComparison.OrdinalIgnoreCase))
+                .Where(b => b.StaffUsername.Equals(username, StringComparison.OrdinalIgnoreCase))
                 .OrderBy(b => b.BookingTime)
                 .ToList();
         }
@@ -55,9 +56,9 @@ namespace BeautyBookingApp.Services
         {
             var bookings = LoadBookings();
 
-            // 使用 Booking 的 Username + BookingTime + Service 名稱 比對（簡單唯一鍵）
+            // 使用 Booking 的 ClientName + BookingTime + Service 名稱 比對（簡單唯一鍵）
             var target = bookings.FirstOrDefault(b =>
-                b.Username == bookingToDelete.Username &&
+                b.ClientName == bookingToDelete.ClientName &&
                 b.BookingTime == bookingToDelete.BookingTime &&
                 b.Service?.Name == bookingToDelete.Service?.Name
             );
@@ -70,5 +71,44 @@ namespace BeautyBookingApp.Services
             }
         }
 
+        internal static void UpdateBooking(Booking updated, Booking org)
+        {
+            var bookings = LoadBookings();
+
+            DumpBookingsToConsole();
+
+            // log updated and org booking information
+            Debug.WriteLine($"Updating booking: {updated} from original: {org}");
+            // 根據時間與原始服務項目與客戶名搜尋原始資料（簡易匹配）
+            var index = bookings.FindIndex(b =>
+                b.BookingTime == org.BookingTime &&
+                b.Service?.Name == org.Service?.Name &&
+                b.ClientName == org.ClientName);
+            Debug.WriteLine($"index: {index}");
+            if (index >= 0)
+            {
+                bookings[index] = updated;
+            }
+            else
+            {
+                // 或者找不到原本的就直接覆蓋新增也可
+                bookings.Add(updated);
+            }
+
+            var json = JsonConvert.SerializeObject(bookings, Formatting.Indented);
+            File.WriteAllText(BookingFilePath, json);
+        }
+
+        /**
+         * dump all element in bookings to console for debugging
+         */
+        public static void DumpBookingsToConsole()
+        {
+            var bookings = LoadBookings();
+            foreach (var booking in bookings)
+            {
+                Debug.WriteLine(booking);
+            }
+        }
     }
 }
