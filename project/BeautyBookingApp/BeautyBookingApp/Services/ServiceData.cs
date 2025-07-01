@@ -6,9 +6,12 @@
 using BeautyBookingApp.Models;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace BeautyBookingApp.Services
 {
@@ -17,30 +20,25 @@ namespace BeautyBookingApp.Services
         // List of service items by GetSrviceItems method
         public static List<ServiceItem> GetServiceItems()
         {
-            return new List<ServiceItem>
+            // json path: "Files/beauty_service_list.json"
+            string jsonFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Files", "beauty_service_list.json");
+
+            try
             {
-                new ServiceItem
-                {
-                    Name = "臉部清潔",
-                    Description = "深層清潔臉部肌膚，去除污垢和油脂",
-                    Price = 800,
-                    DurationMinutes = 60
-                },
-                new ServiceItem
-                {
-                    Name = "全身按摩",
-                    Description = "舒緩全身肌肉，放鬆身心",
-                    Price = 1500,
-                    DurationMinutes = 90
-                },
-                new ServiceItem
-                {
-                    Name = "美甲護理",
-                    Description = "專業美甲設計和護理",
-                    Price = 600,
-                    DurationMinutes = 45
-                }
-            };
+                if (!File.Exists(jsonFilePath))
+                    throw new FileNotFoundException("找不到服務清單 JSON 檔案", jsonFilePath);
+
+                string json = File.ReadAllText(jsonFilePath);
+                var items = JsonSerializer.Deserialize<List<ServiceItem>>(json);
+
+                return items ?? new List<ServiceItem>();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"讀取服務清單時發生錯誤：{ex.Message}", "錯誤", MessageBoxButton.OK, MessageBoxImage.Error);
+                return new List<ServiceItem>();
+            }
+            
         }
 
     }
