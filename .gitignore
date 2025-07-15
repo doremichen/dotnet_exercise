@@ -36,3 +36,6 @@ x64/
 
 # bak file
 *.bak
+
+# archive file
+*.7z
