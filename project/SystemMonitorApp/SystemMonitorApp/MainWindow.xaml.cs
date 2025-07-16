@@ -115,5 +115,16 @@ namespace SystemMonitorApp
             }
 
         }
+
+        private void CloseApp_Click(object sender, RoutedEventArgs e)
+        {
+            // 確認是否真的要關閉應用程式
+            var result = MessageBox.Show("確定要關閉應用程式嗎？", "確認", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (result == MessageBoxResult.Yes)
+            {
+                Application.Current.Shutdown(); // 關閉應用程式
+            }
+
+        }
     }
 }
