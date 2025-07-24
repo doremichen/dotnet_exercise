@@ -26,7 +26,12 @@ namespace BeautyBookingApp.Services
             try
             {
                 if (!File.Exists(jsonFilePath))
-                    throw new FileNotFoundException("找不到服務清單 JSON 檔案", jsonFilePath);
+                {
+                    // If the file does not exist, show a message box and return an empty list
+                    MessageBox.Show("找不到服務清單 JSON 檔案，請確認檔案存在於指定路徑。", "錯誤", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return new List<ServiceItem>();
+                }
+            
 
                 string json = File.ReadAllText(jsonFilePath);
                 var items = JsonSerializer.Deserialize<List<ServiceItem>>(json);
