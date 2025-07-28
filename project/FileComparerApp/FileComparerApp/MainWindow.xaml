@@ -1,0 +1,84 @@
+﻿<Window x:Class="FileComparerApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:FileComparerApp"
+        xmlns:vm="clr-namespace:FileComparerApp.ViewModels"
+        xmlns:models="clr-namespace:FileComparerApp.Models"
+        xmlns:service="clr-namespace:FileComparerApp.Services"
+        mc:Ignorable="d"
+        Title="檔案比對器" Height="600" Width="800">
+    <Window.DataContext>
+        <vm:MainViewModel/>
+    </Window.DataContext>
+
+    <DockPanel Margin="10">
+        <!-- Top controls -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Vertical" Margin="0 0 0 10">
+            <TextBlock Text="左邊路徑:"/>
+            <TextBox Text="{Binding LeftPath, UpdateSourceTrigger=PropertyChanged}" />
+
+            <TextBlock Text="右邊路徑:" Margin="0 5 0 0"/>
+            <TextBox Text="{Binding RightPath, UpdateSourceTrigger=PropertyChanged}" />
+
+            <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
+                <TextBlock Text="比對模式:" VerticalAlignment="Center"/>
+                <ComboBox Width="150" Margin="5 0"
+                  ItemsSource="{Binding CompareModes}"
+                  SelectedItem="{Binding SelectedMode}"/>
+
+                <Button Content="執行比對"
+                        Margin="10 0"
+                        Command="{Binding CompareCommand}" />
+            </StackPanel>
+        </StackPanel>
+
+        <!-- TreeView result -->
+        <TreeView ItemsSource="{Binding CompareTree}"
+                  SelectedItemChanged="TreeView_SelectedItemChanged">
+            <TreeView.Resources>
+                <!-- 樹節點模板 -->
+                <HierarchicalDataTemplate DataType="{x:Type models:FolderNode}" ItemsSource="{Binding Children}">
+                    <TextBlock Text="{Binding Name}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding CompareType}" Value="Added">
+                                        <Setter Property="Foreground" Value="Green"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding CompareType}" Value="Removed">
+                                        <Setter Property="Foreground" Value="Red"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding CompareType}" Value="Modified">
+                                        <Setter Property="Foreground" Value="Orange"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </HierarchicalDataTemplate>
+
+                <DataTemplate DataType="{x:Type models:FileNode}">
+                    <TextBlock Text="{Binding Name}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding CompareType}" Value="Added">
+                                        <Setter Property="Foreground" Value="Green"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding CompareType}" Value="Removed">
+                                        <Setter Property="Foreground" Value="Red"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding CompareType}" Value="Modified">
+                                        <Setter Property="Foreground" Value="Orange"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </DataTemplate>
+            </TreeView.Resources>
+        </TreeView>
+    </DockPanel>
+</Window>
