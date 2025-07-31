@@ -9,6 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="ExcelExporterClosedXML" Version="1.0.10" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="Files\subjects.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

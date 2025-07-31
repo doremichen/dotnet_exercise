@@ -8,7 +8,9 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Input;
 using TimetableGenerator.Models;
+using TimetableGenerator.ViewModels.Commands;
 
 namespace TimetableGenerator.ViewModels
 {
@@ -59,14 +61,35 @@ namespace TimetableGenerator.ViewModels
             }
         }
 
+        // ExportWeek property
+        private int _exportWeek = 1; // 預設為第 1 週
+        public int ExportWeek
+        {
+            get => _exportWeek;
+            set
+            {
+                if (_exportWeek != value)
+                {
+                    _exportWeek = value;
+                    OnPropertyChanged(nameof(ExportWeek));
+                }
+            }
+        }
+
+
+        public ICommand ExportExcelCommand { get; }
 
         // Constructor to initialize the ViewModel
         public MainViewModel()
         {
+
+            // ==== 初始化命令 ====
+            ExportExcelCommand = new RelayCommand(ExportToExcel);
+
             // ==== 從 JSON 檔案讀取 Subjects 列表 ====
             LoadSubjectsFromJson();
 
-            // 初始化上午課表 (這部分保持不變)
+            // 初始化上午課表
             for (int day = 0; day < 5; day++) // 星期一到星期五 (0-4)
             {
                 for (int period = 0; period < 4; period++) // 上午 4 節課 (0-3)
@@ -81,7 +104,7 @@ namespace TimetableGenerator.ViewModels
                 }
             }
 
-            // 初始化下午課表 (這部分保持不變)
+            // 初始化下午課表
             for (int day = 0; day < 5; day++) // 星期一到星期五 (0-4)
             {
                 for (int period = 0; period < 3; period++) // 下午 3 節課 (0-2)
@@ -95,6 +118,92 @@ namespace TimetableGenerator.ViewModels
                     });
                 }
             }
+        }
+
+        private void ExportToExcel()
+        {
+            // dialog to select save location
+            var saveFileDialog = new Microsoft.Win32.SaveFileDialog
+            {
+                Filter = "Excel Files (*.xlsx)|*.xlsx",
+                DefaultExt = ".xlsx",
+                FileName = $"課表_{DateTime.Today:yyyy_MM_dd}_第{ExportWeek}週.xlsx"
+            };
+
+            if (saveFileDialog.ShowDialog() != true)
+            {
+                // 如果使用者取消了儲存對話框，則不進行任何操作
+                return;
+            }
+
+
+            var wb = new ClosedXML.Excel.XLWorkbook();
+            var ws = wb.Worksheets.Add("課表");
+
+            // 設定標題行
+            ws.Cell(1, 1).Value = "星期/時段";
+            ws.Cell(1, 2).Value = "上午課程";
+            ws.Cell(1, 3).Value = "下午課程";
+
+            ws.Cell(1, 1).Style.Font.Bold = true;
+            ws.Cell(1, 2).Style.Font.Bold = true;
+            ws.Cell(1, 3).Style.Font.Bold = true;
+
+            // days of the week
+            string[] daysOfWeek = { "星期一", "星期二", "星期三", "星期四", "星期五" };
+            for (int i = 0; i < daysOfWeek.Length; i++)
+            {
+                ws.Cell(1, i + 2).Value = daysOfWeek[i];
+            }
+            // 設定上午和下午課程的標題
+            string[] section = { "第一節", "第二節", "第三節", "第四節", "", "第一節", "第二節", "第三節", };
+            for (int i = 0; i < section.Length; i++)
+            {
+                ws.Cell(i + 2, 1).Value = section[i];
+            }
+
+            // 上午課表
+            for (int day = 0; day < 5; day++) // 星期一到星期五 (0-4)
+            {
+                for (int period = 0; period < 4; period++) // 上午 4 節課 (0-3)
+                {
+                    var cell = MorningTimetable.FirstOrDefault(c => c.Day == day && c.Period == period);
+                    if (cell != null)
+                    {
+                        ws.Cell(period + 2, day + 2).Value = cell.Subject?.Name ?? "無課程";
+                    }
+                }
+            }
+
+            // 午休列
+            ws.Cell(6, 1).Value = "午休";
+
+            // 下午課表
+            for (int day = 0; day < 5; day++) // 星期一到星期五 (0-4)
+            {
+                for (int period = 0; period < 3; period++) // 下午 3 節課 (0-2)
+                {
+                    var cell = AfternoonTimetable.FirstOrDefault(c => c.Day == day && c.Period == period);
+                    if (cell != null)
+                    {
+                        ws.Cell(period + 7, day + 2).Value = cell.Subject?.Name ?? "無課程";
+                    }
+                }
+            }
+
+            // 自動調整欄寬
+            ws.Columns().AdjustToContents();
+
+            try
+            {
+                wb.SaveAs(saveFileDialog.FileName);
+                MessageBox.Show($"課表已成功匯出到桌面: {saveFileDialog.FileName}", "匯出成功", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"匯出課表時發生錯誤: {ex.Message}", "匯出失敗", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+
         }
 
         private void LoadSubjectsFromJson()
