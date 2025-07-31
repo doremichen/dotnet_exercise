@@ -5,6 +5,8 @@ VisualStudioVersion = 17.14.36109.1 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TimetableGenerator", "TimetableGenerator\TimetableGenerator.csproj", "{19BDCF4C-3DD2-448F-A379-C3397D1C8A18}"
 EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "SetupTimetableGenerator", "SetupTimetableGenerator\SetupTimetableGenerator.vdproj", "{08EF8F51-1F79-B7FF-E2FB-60782ED4FC5A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,8 @@ Global
 		{19BDCF4C-3DD2-448F-A379-C3397D1C8A18}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{19BDCF4C-3DD2-448F-A379-C3397D1C8A18}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{19BDCF4C-3DD2-448F-A379-C3397D1C8A18}.Release|Any CPU.Build.0 = Release|Any CPU
+		{08EF8F51-1F79-B7FF-E2FB-60782ED4FC5A}.Debug|Any CPU.ActiveCfg = Debug
+		{08EF8F51-1F79-B7FF-E2FB-60782ED4FC5A}.Release|Any CPU.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

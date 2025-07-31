@@ -87,7 +87,7 @@ namespace TimetableGenerator.ViewModels
             ExportExcelCommand = new RelayCommand(ExportToExcel);
 
             // ==== 從 JSON 檔案讀取 Subjects 列表 ====
-            LoadSubjectsFromJson();
+            // function change: LoadSubjectsFromJson();
 
             // 初始化上午課表
             for (int day = 0; day < 5; day++) // 星期一到星期五 (0-4)
