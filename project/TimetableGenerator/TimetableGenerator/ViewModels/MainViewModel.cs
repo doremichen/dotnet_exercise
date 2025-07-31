@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ClosedXML.Excel;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -140,26 +141,33 @@ namespace TimetableGenerator.ViewModels
             var wb = new ClosedXML.Excel.XLWorkbook();
             var ws = wb.Worksheets.Add("課表");
 
+
             // 設定標題行
             ws.Cell(1, 1).Value = "星期/時段";
-            ws.Cell(1, 2).Value = "上午課程";
-            ws.Cell(1, 3).Value = "下午課程";
-
             ws.Cell(1, 1).Style.Font.Bold = true;
-            ws.Cell(1, 2).Style.Font.Bold = true;
-            ws.Cell(1, 3).Style.Font.Bold = true;
+
 
             // days of the week
             string[] daysOfWeek = { "星期一", "星期二", "星期三", "星期四", "星期五" };
             for (int i = 0; i < daysOfWeek.Length; i++)
             {
                 ws.Cell(1, i + 2).Value = daysOfWeek[i];
+                ws.Cell(1, i + 2).Style.Font.Bold = true;
             }
             // 設定上午和下午課程的標題
-            string[] section = { "第一節", "第二節", "第三節", "第四節", "", "第一節", "第二節", "第三節", };
-            for (int i = 0; i < section.Length; i++)
+            string[] morningSections = { "第一節", "第二節", "第三節", "第四節" };
+            for (int i = 0; i < morningSections.Length; i++)
             {
-                ws.Cell(i + 2, 1).Value = section[i];
+                ws.Cell(i + 2, 1).Value = morningSections[i];
+            }
+
+            // 午休列
+            ws.Cell(6, 1).Value = "午休"; // 這會影響到 AdjustToContents 的行高，但不會影響列寬
+
+            string[] afternoonSections = { "第一節", "第二節", "第三節" };
+            for (int i = 0; i < afternoonSections.Length; i++)
+            {
+                ws.Cell(i + 7, 1).Value = afternoonSections[i];
             }
 
             // 上午課表
@@ -175,9 +183,6 @@ namespace TimetableGenerator.ViewModels
                 }
             }
 
-            // 午休列
-            ws.Cell(6, 1).Value = "午休";
-
             // 下午課表
             for (int day = 0; day < 5; day++) // 星期一到星期五 (0-4)
             {
@@ -191,8 +196,31 @@ namespace TimetableGenerator.ViewModels
                 }
             }
 
-            // 自動調整欄寬
-            ws.Columns().AdjustToContents();
+
+            // 強制每格內容可見、置中、可換行
+            foreach (var cell in ws.CellsUsed())
+            {
+                cell.Style.Alignment.WrapText = true;
+                cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                cell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+            }
+
+            // 設定欄位寬度 20
+            for (int i = 1; i <= 7; i++) // 1 到 7 欄 (包含星期/時段和五天的課程)
+            {
+                ws.Column(i).Width = 20;
+            }
+
+            // 自動調整欄寬: 這個Api有問題，會導致列高不正確，所以暫時註解掉
+            //ws.Columns().AdjustToContents();
+            //ws.Column(1).AdjustToContents();
+
+            // 設定表格邊界
+            ws.RangeUsed().Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+            ws.RangeUsed().Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+            ws.RangeUsed().Style.Border.OutsideBorderColor = XLColor.Black;
+            ws.RangeUsed().Style.Border.InsideBorderColor = XLColor.Black;
+
 
             try
             {
