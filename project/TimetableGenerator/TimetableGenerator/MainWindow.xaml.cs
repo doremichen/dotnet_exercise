@@ -43,19 +43,38 @@ namespace TimetableGenerator
                         var json = File.ReadAllText(dialog.FileName);
                         var subjects = JsonSerializer.Deserialize<List<Subject>>(json);
 
-                        if (subjects?.Count > 0)
+                        // start CouseSelectDialog
+                        var selectDialog = new Views.CourseSelectDialog(subjects);
+                        if (selectDialog.ShowDialog() == true)
                         {
-                            var subjectNames = subjects.Select(s => s.Name).ToList();
-                            var selected = Microsoft.VisualBasic.Interaction.InputBox(
-                                "請輸入課程名稱：\n" + string.Join("\n", subjectNames),
-                                "選擇課程", subjectNames[0]);
-
-                            var chosen = subjects.FirstOrDefault(s => s.Name == selected);
-                            if (chosen != null)
+                            Subject? selectedSubject = selectDialog.SelectedSubject;
+                            // check if selectedSubject is null
+                            if (selectedSubject == null)
                             {
-                                cell.Subject = chosen;
+                                MessageBox.Show("請選擇一個科目。", "錯誤", MessageBoxButton.OK, MessageBoxImage.Error);
+                                return;
                             }
+
+                            cell.Subject = selectedSubject;
                         }
+
+
+                        /**
+                         function change:
+                            if (subjects?.Count > 0)
+                            {
+                                var subjectNames = subjects.Select(s => s.Name).ToList();
+                                var selected = Microsoft.VisualBasic.Interaction.InputBox(
+                                    "請輸入課程名稱：\n" + string.Join("\n", subjectNames),
+                                    "選擇課程", subjectNames[0]);
+
+                                var chosen = subjects.FirstOrDefault(s => s.Name == selected);
+                                if (chosen != null)
+                                {
+                                    cell.Subject = chosen;
+                                }
+                            }
+                         */
                     }
                     catch (Exception ex)
                     {

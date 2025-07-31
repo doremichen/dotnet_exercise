@@ -94,6 +94,10 @@
                                 IsEditable="True"
                                 IsReadOnly="True"
                                 DropDownOpened="ComboBox_DropDownOpened"
+                                FontWeight="Bold"
+                                FontSize="18"
+                                HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center"
                                 />
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
@@ -157,6 +161,10 @@
                                 IsEditable="True"
                                 IsReadOnly="True"
                                 DropDownOpened="ComboBox_DropDownOpened"
+                                FontWeight="Bold"
+                                FontSize="18"
+                                HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center"
                                 />
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>

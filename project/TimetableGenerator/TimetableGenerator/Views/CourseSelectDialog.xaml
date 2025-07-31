@@ -1,0 +1,17 @@
+﻿<Window x:Class="TimetableGenerator.Views.CourseSelectDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TimetableGenerator.Views"
+        mc:Ignorable="d"
+        Title="選擇課程" Height="300" Width="300" WindowStartupLocation="CenterOwner" ResizeMode="NoResize">
+    <StackPanel Margin="10">
+        <TextBlock Text="請選擇一門課程：" FontWeight="Bold" Margin="0,0,0,10"/>
+        <ListBox x:Name="CourseListBox" DisplayMemberPath="Name" Height="180"/>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+            <Button Content="確定" Width="80" Margin="5" Click="Confirm_Click"/>
+            <Button Content="取消" Width="80" Margin="5" Click="Cancel_Click"/>
+        </StackPanel>
+    </StackPanel>
+</Window>
