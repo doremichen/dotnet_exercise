@@ -40,6 +40,9 @@ namespace BeautyBookingApp.Views
 
         private void ConfirmBooking_Click(object sender, RoutedEventArgs e)
         {
+            // audit log for booking confirmation
+            ServiceLocator.AuditLogger?.Log(_username, "Confirm Booking", _service?.Name ?? "Unknown Service", $"Client: {clientNameInput.Text.Trim()}");
+
             if (datePicker.SelectedDate == null || string.IsNullOrWhiteSpace(timeInput.Text))
             {
                 MessageBox.Show("請選擇日期並輸入時間！");
@@ -62,6 +65,10 @@ namespace BeautyBookingApp.Views
                 Service = _service,
                 BookingTime = bookingTime
             });
+
+            // audit log for booking saved
+            ServiceLocator.AuditLogger?.Log(_username, "Booking Saved", _service?.Name ?? "Unknown Service", $"Client: {clientNameInput.Text.Trim()}, Time: {bookingTime:yyyy/MM/dd HH:mm}");
+
 
             // 這裡可進一步保存資料，目前先模擬顯示
             MessageBox.Show($"預約成功：{_service!.Name}\n時間：{bookingTime}");

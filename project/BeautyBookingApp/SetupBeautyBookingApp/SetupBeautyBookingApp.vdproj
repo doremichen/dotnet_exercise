@@ -15,7 +15,7 @@
     {
         "Entry"
         {
-        "MsmKey" = "8:_B9D1929BB63C4C65BE11841D1968186B"
+        "MsmKey" = "8:_0CFDD60BFECF467BB817D1E26918B135"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -37,6 +37,22 @@
         "PrivateKeyFile" = "8:"
         "TimeStampServer" = "8:"
         "InstallerBootstrapper" = "3:2"
+            "BootstrapperCfg:{63ACBE69-63AA-4F98-B2B6-99F9E24495F2}"
+            {
+            "Enabled" = "11:TRUE"
+            "PromptEnabled" = "11:TRUE"
+            "PrerequisitesLocation" = "2:1"
+            "Url" = "8:"
+            "ComponentsUrl" = "8:"
+                "Items"
+                {
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:.NETFramework,Version=v4.7.2"
+                    {
+                    "Name" = "8:Microsoft .NET Framework 4.7.2 (x86 and x64)"
+                    "ProductCode" = "8:.NETFramework,Version=v4.7.2"
+                    }
+                }
+            }
         }
         "Release"
         {
@@ -53,6 +69,22 @@
         "PrivateKeyFile" = "8:"
         "TimeStampServer" = "8:"
         "InstallerBootstrapper" = "3:2"
+            "BootstrapperCfg:{63ACBE69-63AA-4F98-B2B6-99F9E24495F2}"
+            {
+            "Enabled" = "11:TRUE"
+            "PromptEnabled" = "11:TRUE"
+            "PrerequisitesLocation" = "2:1"
+            "Url" = "8:"
+            "ComponentsUrl" = "8:"
+                "Items"
+                {
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:.NETFramework,Version=v4.7.2"
+                    {
+                    "Name" = "8:Microsoft .NET Framework 4.7.2 (x86 and x64)"
+                    "ProductCode" = "8:.NETFramework,Version=v4.7.2"
+                    }
+                }
+            }
         }
     }
     "Deployable"
@@ -70,6 +102,16 @@
         {
             "LaunchCondition"
             {
+                "{A06ECF26-33A3-4562-8140-9B0E340D4F24}:_A3E00B2A0E0C44539596642F6C06367D"
+                {
+                "Name" = "8:.NET Core"
+                "Message" = "8:[VSDNETCOREMSG]"
+                "AllowLaterVersions" = "11:FALSE"
+                "InstallUrl" = "8:https://dotnet.microsoft.com/download/dotnet-core/[NetCoreVerMajorDotMinor]"
+                "IsNETCore" = "11:TRUE"
+                "Architecture" = "2:0"
+                "Runtime" = "2:0"
+                }
             }
         }
         "File"
@@ -83,7 +125,7 @@
             "{1525181F-901A-416C-8A58-119130FE478E}:_34D8642EEFAB4854A23CCA9C395B9D52"
             {
             "Name" = "8:#1916"
-            "AlwaysCreate" = "11:FALSE"
+            "AlwaysCreate" = "11:TRUE"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Property" = "8:DesktopFolder"
@@ -94,7 +136,7 @@
             "{1525181F-901A-416C-8A58-119130FE478E}:_5777270CF553401EB45818FCEC33CA64"
             {
             "Name" = "8:#1919"
-            "AlwaysCreate" = "11:FALSE"
+            "AlwaysCreate" = "11:TRUE"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Property" = "8:ProgramMenuFolder"
@@ -106,7 +148,7 @@
             {
             "DefaultLocation" = "8:[ProgramFiles64Folder][Manufacturer]\\[ProductName]"
             "Name" = "8:#1925"
-            "AlwaysCreate" = "11:FALSE"
+            "AlwaysCreate" = "11:TRUE"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Property" = "8:TARGETDIR"
@@ -131,7 +173,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:BeautyBookingApp"
         "ProductCode" = "8:{83DADD80-456C-47F3-908E-EAF9CEF7BF4D}"
-        "PackageCode" = "8:{1B01A6AE-3002-418C-8FCE-73D6D511F7BA}"
+        "PackageCode" = "8:{6C0F00FF-7A08-4CE9-939B-FB0019D0E61F}"
         "UpgradeCode" = "8:{CEB50FBB-EA8F-4364-B74C-628E501C32E7}"
         "AspNetVersion" = "8:"
         "RestartWWWService" = "11:FALSE"
@@ -139,7 +181,7 @@
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:TRUE"
         "ProductVersion" = "8:1.0.0"
-        "Manufacturer" = "8:abb"
+        "Manufacturer" = "8:abb company"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
         "Title" = "8:BeautyBookingApp"
@@ -251,6 +293,20 @@
         }
         "Shortcut"
         {
+            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_C3029E9EE7124A469B6278347A28C6CF"
+            {
+            "Name" = "8:TestShortcut"
+            "Arguments" = "8:"
+            "Description" = "8:"
+            "ShowCmd" = "3:1"
+            "IconIndex" = "3:0"
+            "Transitive" = "11:FALSE"
+            "Target" = "8:_A22A68131CAB405CA1C6CBC2F78B063C"
+            "Folder" = "8:_34D8642EEFAB4854A23CCA9C395B9D52"
+            "WorkingFolder" = "8:_34D8642EEFAB4854A23CCA9C395B9D52"
+            "Icon" = "8:"
+            "Feature" = "8:"
+            }
         }
         "UserInterface"
         {
@@ -650,7 +706,7 @@
         }
         "ProjectOutput"
         {
-            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_B9D1929BB63C4C65BE11841D1968186B"
+            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_0CFDD60BFECF467BB817D1E26918B135"
             {
             "SourcePath" = "8:..\\BeautyBookingApp\\obj\\Release\\net8.0-windows\\apphost.exe"
             "TargetName" = "8:"
@@ -670,7 +726,7 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             "ProjectOutputGroupRegister" = "3:1"
-            "OutputConfiguration" = "8:Release|Any CPU"
+            "OutputConfiguration" = "8:"
             "OutputGroupCanonicalName" = "8:PublishItems"
             "OutputProjectGuid" = "8:{3D165E14-AA76-41AC-8CDC-F2814DF05A3D}"
             "ShowKeyOutput" = "11:TRUE"

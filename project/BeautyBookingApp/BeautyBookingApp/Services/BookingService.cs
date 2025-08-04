@@ -4,6 +4,7 @@
  * Date: 2025-06-30
  */
 using BeautyBookingApp.Models;
+using BeautyBookingApp.Utils;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -18,7 +19,7 @@ namespace BeautyBookingApp.Services
     public static class BookingService
     {
         // filepath: "bookings.json"
-        private const string BookingFilePath = "bookings.json";
+        private static readonly string BookingFilePath = AppDataHelper.GetAppDataFilePath("bookings.json");
 
         // load bookings from JSON file
         // return list of bookings
