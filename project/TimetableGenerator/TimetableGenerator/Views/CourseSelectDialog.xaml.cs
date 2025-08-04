@@ -1,4 +1,10 @@
-﻿using System;
+﻿/**
+ * Description: This class is the CourseSelectDialog, which is a dialog for selecting a course from a list of subjects.
+ * 
+ * Author: Adam chen
+ * Date: 2025/08/04
+ */
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;

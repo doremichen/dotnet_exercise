@@ -1,4 +1,10 @@
-﻿using ClosedXML.Excel;
+﻿/**
+ * Description: This class is the ViewModel for the main window of the timetable generator application.
+ * 
+ * Author: Adam Chen
+ * Date: 2025/08/04
+ */
+using ClosedXML.Excel;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;

@@ -1,4 +1,10 @@
-﻿using DocumentFormat.OpenXml.Spreadsheet;
+﻿/**
+ * Description: This class is the MianWindow, which is the main window of the application.
+ * 
+ * Author: Adam Chen
+ * Date: 2025/08/04
+ */
+using DocumentFormat.OpenXml.Spreadsheet;
 using System.IO;
 using System.Text;
 using System.Text.Json;

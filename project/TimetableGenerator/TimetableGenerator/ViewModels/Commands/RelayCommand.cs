@@ -1,4 +1,11 @@
-﻿using System;
+﻿/**
+ * Description: Thi class is RelayCommand , which implements ICommand interface.
+ * 
+ * Author: Adam chen
+ * Date: 2025/08/04
+ * 
+ */
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
