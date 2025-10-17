@@ -9,6 +9,11 @@
                 <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
+            <SolidColorBrush x:Key="PageBackgroundBrush"
+                         Color="{AppThemeBinding Light=White, Dark=#121212}" />
+
+            <SolidColorBrush x:Key="PrimaryTextBrush"
+                         Color="{AppThemeBinding Light=Black, Dark=White}" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

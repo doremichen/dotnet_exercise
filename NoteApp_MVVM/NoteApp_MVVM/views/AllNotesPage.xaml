@@ -3,14 +3,23 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewModels="clr-namespace:NoteApp_MVVM.viewModels"
              x:Class="NoteApp_MVVM.views.AllNotesPage"
-             Title="AllNotesPage">
+             Title="AllNotesPage"
+             Background="{StaticResource White}">
     <ContentPage.BindingContext>
         <viewModels:AllNotesViewModel />
     </ContentPage.BindingContext>
 
+    <!-- 設定 Toolbar 顏色 -->
+    <ContentPage.Resources>
+        <Style TargetType="NavigationPage">
+            <Setter Property="BarBackgroundColor" Value="GreenYellow"/>
+            <Setter Property="BarTextColor" Value="White"/>
+        </Style>
+    </ContentPage.Resources>
+
     <!-- Add an item to the toolbar -->
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="Add" Command="{Binding NewCommand}" IconImageSource="{FontImage Glyph='+', Color=Black, Size=22}" />
+        <ToolbarItem Text="Add" Command="{Binding NewCommand}" IconImageSource="{FontImage Glyph='+', Size=22}"/>
     </ContentPage.ToolbarItems>
 
     <!-- Display notes in a list -->
@@ -29,7 +38,7 @@
         <CollectionView.ItemTemplate>
             <DataTemplate>
                 <StackLayout>
-                    <Label Text="{Binding Content}" FontSize="22"/>
+                    <Label Text="{Binding Content}" FontSize="22" TextColor="Red"/>
                     <Label Text="{Binding Date}" FontSize="14" TextColor="Silver"/>
                 </StackLayout>
             </DataTemplate>
