@@ -1,0 +1,25 @@
+﻿<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MauiPuzzleHeroGame.Views.MainPage"
+             Title="Puzzle Hero">
+    <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="20">
+        <Label Text="Puzzle Hero"
+               FontSize="36"
+               HorizontalOptions="Center"
+               TextColor="DarkBlue"/>
+
+        <Button Text="開始遊戲"
+                Command="{Binding StartGameCommand}"
+                WidthRequest="200"/>
+
+        <Button Text="關於"
+                Command="{Binding AboutCommand}"
+                WidthRequest="200"/>
+
+        <Button Text="離開"
+                Command="{Binding ExitCommand}"
+                WidthRequest="200"
+                BackgroundColor="IndianRed"
+                TextColor="White"/>
+    </VerticalStackLayout>
+</ContentPage>

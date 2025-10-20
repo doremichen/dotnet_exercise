@@ -3,12 +3,22 @@
     x:Class="MauiPuzzleHeroGame.AppShell"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:local="clr-namespace:MauiPuzzleHeroGame"
+    xmlns:Views="clr-namespace:MauiPuzzleHeroGame.Views"
     Title="MauiPuzzleHeroGame">
 
     <ShellContent
         Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
+        ContentTemplate="{DataTemplate Views:MainPage}"
         Route="MainPage" />
+
+    <ShellContent
+        Title="Game"
+        ContentTemplate="{DataTemplate Views:GamePage}"
+        Route="GamePage" />
+
+    <ShellContent
+        Title="About"
+        ContentTemplate="{DataTemplate Views:AboutPage}"
+        Route="AboutPage" />
 
 </Shell>

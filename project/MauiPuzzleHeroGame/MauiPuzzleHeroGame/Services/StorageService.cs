@@ -35,7 +35,7 @@ namespace MauiPuzzleHeroGame.Services
          * Save text content to a file asynchronously.
          * 
          * <param name="fileName">The name of the file</param>
-         * <param name="content">The text content to save</param>
+         * <param name="data">The text content to save</param>
          */
         public async Task SaveAsync<T>(string fileName, T data)
         {

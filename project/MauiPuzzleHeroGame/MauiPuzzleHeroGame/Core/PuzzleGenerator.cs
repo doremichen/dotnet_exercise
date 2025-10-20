@@ -29,6 +29,10 @@ namespace MauiPuzzleHeroGame.Core
         // Random number generator for shuffling
         private static readonly Random _random = new ();
 
+        private int _boardSize;
+        private PuzzleBoard _puzzleBoard;
+        private PuzzlePiece? _selectedPiece; // reference to the currently selected piece at first time
+
         /**
          * Generate an NxN puzzle and shuffle the positions
          * 
@@ -37,7 +41,7 @@ namespace MauiPuzzleHeroGame.Core
          * 
          * returns: a PuzzleBoard object containing the shuffled puzzle pieces
          */
-        public PuzzleBoard GeneratePuzzle(string filePath, int boardSize)
+        public async Task<PuzzleBoard> GeneratePuzzleAsync(string filePath, int boardSize)
         {
             if (boardSize < 2)
                 throw new ArgumentException("Board size must be at least 2.");
@@ -45,42 +49,49 @@ namespace MauiPuzzleHeroGame.Core
             if (!File.Exists(filePath))
                 throw new FileNotFoundException("Image file not found", filePath);
 
-            using var input = File.OpenRead(filePath);
-            using var original = SKBitmap.Decode(input);
-
-            int pieceWidth = original.Width / boardSize;
-            int pieceHeight = original.Height / boardSize;
-
-            var pieces = new List<PuzzlePiece>();
-            int id = 0;
-
-            for (int row = 0; row < boardSize; row++)
+            return await Task.Run(() =>
             {
-                for (int col = 0; col < boardSize; col++)
+                _boardSize = boardSize;
+
+                using var input = File.OpenRead(filePath);
+                using var original = SKBitmap.Decode(input);
+
+                int pieceWidth = original.Width / boardSize;
+                int pieceHeight = original.Height / boardSize;
+
+                var pieces = new List<PuzzlePiece>();
+                int id = 0;
+
+                for (int row = 0; row < boardSize; row++)
                 {
-                    // cut the image piece
-                    var croppedImage = CropBitmap(original, col * pieceWidth, row * pieceHeight, pieceWidth, pieceHeight);
-
-                    pieces.Add(new PuzzlePiece
+                    for (int col = 0; col < boardSize; col++)
                     {
-                        Id = id++,
-                        CorrectRow = row,
-                        CorrectColumn = col,
-                        CurrentRow = row,
-                        CurrentColumn = col,
-                        ImagePart = ImageSource.FromStream(() => croppedImage)
-                    });
+                        // cut the image piece
+                        var croppedImage = CropBitmap(original, col * pieceWidth, row * pieceHeight, pieceWidth, pieceHeight);
+
+                        pieces.Add(new PuzzlePiece
+                        {
+                            Id = id++,
+                            CorrectRow = row,
+                            CorrectColumn = col,
+                            CurrentRow = row,
+                            CurrentColumn = col,
+                            ImagePart = ImageSource.FromStream(() => croppedImage)
+                        });
+                    }
                 }
-            }
 
-            // shuffle pieces
-            ShufflePieces(pieces, boardSize);
+                // shuffle pieces
+                ShufflePieces(pieces, boardSize);
 
-            var board = new PuzzleBoard(boardSize);
-            foreach (var p in pieces)
-                board.Pieces.Add(p);
+                var board = new PuzzleBoard(boardSize);
+                foreach (var p in pieces)
+                    board.Pieces.Add(p);
 
-            return board;
+                _puzzleBoard = board;
+
+                return board;
+            });
         }
 
         /**
@@ -132,6 +143,51 @@ namespace MauiPuzzleHeroGame.Core
                 pieces[index].CurrentRow = index / boardSize;
                 pieces[index].CurrentColumn = index % boardSize;
             }
+        }
+
+        public void Shuffle()
+        {
+            ShufflePieces(_puzzleBoard.Pieces.ToList<PuzzlePiece>(), _boardSize);
+            // clear pieces and re-add to trigger UI update
+            var pieces = _puzzleBoard.Pieces.ToList<PuzzlePiece>();
+            _puzzleBoard.Pieces.Clear();
+            foreach (var p in pieces)
+                _puzzleBoard.Pieces.Add(p);
+        }
+
+        internal void MovePiece(PuzzlePiece piece)
+        {
+            if (_puzzleBoard == null || piece == null)
+                return;
+
+            // If no piece is selected, select the current piece
+            if (_selectedPiece == null)
+            {
+                _selectedPiece = piece;
+                piece.IsSelected = true;
+                return;
+            }
+
+            // If the same piece is selected again, deselect it
+            if (_selectedPiece == piece)
+            {
+                piece.IsSelected = false;
+                _selectedPiece = null;
+                return;
+            }
+
+            // == swap the selected piece with the current piece ==
+            _puzzleBoard.SwapPieces(_selectedPiece, piece);
+
+            // Update the pieces collection to trigger UI update
+            var pieces = _puzzleBoard.Pieces.OrderBy(p => p.CurrentRow * _boardSize + p.CurrentColumn).ToList();
+            _puzzleBoard.Pieces.Clear();
+            foreach (var p in pieces)
+                _puzzleBoard.Pieces.Add(p);
+
+            // Deselect the piece after swapping
+            _selectedPiece.IsSelected = false;
+            _selectedPiece = null;
         }
     }
 }

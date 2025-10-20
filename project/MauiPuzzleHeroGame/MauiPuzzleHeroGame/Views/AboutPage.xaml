@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MauiPuzzleHeroGame.Views.AboutPage"
+             Title="AboutPage">
+    <VerticalStackLayout Padding="30" Spacing="20" VerticalOptions="Center">
+        <Label Text="Puzzle Hero 是一款由 .NET MAUI 與 C# 技術打造的跨平台拼圖遊戲。"
+               FontSize="18"
+               TextColor="Black"
+               HorizontalTextAlignment="Center"
+               LineBreakMode="WordWrap"/>
+
+        <Label Text="此遊戲展示了 MVVM 架構、圖片切割、隨機排列與狀態保存等技術。"
+               FontSize="16"
+               TextColor="Gray"
+               HorizontalTextAlignment="Center"
+               LineBreakMode="WordWrap"/>
+
+        <Button Text="OK"
+                Command="{Binding CloseCommand}"
+                WidthRequest="150"
+                HorizontalOptions="Center"/>
+    </VerticalStackLayout>
+</ContentPage>
