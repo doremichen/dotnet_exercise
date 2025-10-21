@@ -5,12 +5,10 @@
              x:Class="MauiPuzzleHeroGame.Views.GamePage"
              Title="GamePage">
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="選擇檔案"
-                     Command="{Binding SelectFileCommand}" />
         <ToolbarItem Text="開始遊戲"
                      Command="{Binding StartGameCommand}" />
         <ToolbarItem Text="重玩"
-                     Command="{Binding RestartCommand}" />
+                     Command="{Binding RestartGameCommand}" />
         <ToolbarItem Text="返回上一頁"
                      Command="{Binding BackCommand}" />
     </ContentPage.ToolbarItems>
@@ -24,11 +22,9 @@
                   HorizontalOptions="Center"
                   VerticalOptions="Center">
                 <!-- GameViewModel Binding -->
-                <CollectionView ItemsSource="{Binding PuzzlePieces}">
-                    <CollectionView.ItemsLayout>
-                        <GridItemsLayout Orientation="Vertical" 
-                                         Span="{Binding BoardSize}" />
-                    </CollectionView.ItemsLayout>
+                <CollectionView ItemsSource="{Binding PuzzlePieces}"
+                                ItemsLayout="{Binding PuzzleLayout}">
+                   
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
                             <Border Padding="0" Margin="1" StrokeThickness="0">
@@ -36,8 +32,8 @@
                                        Aspect="AspectFill" 
                                        HeightRequest="100" WidthRequest="100">
                                     <Image.GestureRecognizers>
-                                        <TapGestureRecognizer 
-                                            Command="{Binding Source={RelativeSource AncestorType={x:Type Views:GamePage}}, Path=BindingContext.PieceTappedCommand}"
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type CollectionView}}, Path=BindingContext.PieceTappedCommand}"
                                             CommandParameter="{Binding .}" />
                                     </Image.GestureRecognizers>
                                 </Image>

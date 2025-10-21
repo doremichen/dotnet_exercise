@@ -14,6 +14,7 @@ using CommunityToolkit.Mvvm.Input;
 using MauiPuzzleHeroGame.Core;
 using MauiPuzzleHeroGame.Models;
 using MauiPuzzleHeroGame.Services;
+using MauiPuzzleHeroGame.Utils;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -49,6 +50,14 @@ namespace MauiPuzzleHeroGame.ViewModels
         [ObservableProperty]
         private bool? isCompleted;
 
+
+        [ObservableProperty]
+        private GridItemsLayout puzzleLayout = new GridItemsLayout(ItemsLayoutOrientation.Vertical)
+        {
+            Span = 3
+        };
+
+
         public ObservableCollection<PuzzlePiece> PuzzlePieces { get; } = new();
 
         // === Constructor ===
@@ -71,11 +80,20 @@ namespace MauiPuzzleHeroGame.ViewModels
         [RelayCommand]
         private async Task StartGameAsync()
         {
+            bool flowControl = await startGame();
+            if (!flowControl)
+            {
+                return;
+            }
+        }
+
+        private async Task<bool> startGame()
+        {
             try
             {
                 var path = await _imageService.PickFromGalleryAsync();
                 if (string.IsNullOrEmpty(path))
-                    return;
+                    return false;
 
                 PuzzleImage = await _imageService.ResizeImageAsync(path, 600, 600);
 
@@ -94,6 +112,8 @@ namespace MauiPuzzleHeroGame.ViewModels
             {
                 Console.WriteLine($"Start game fail: {ex.Message}");
             }
+
+            return true;
         }
 
         [RelayCommand]
@@ -170,5 +190,42 @@ namespace MauiPuzzleHeroGame.ViewModels
             _timerService.Reset();
             _timerService.Start();
         }
+
+        [RelayCommand]
+        public async Task RestartGameAsync()
+        {
+            PuzzlePieces.Clear();
+            PuzzleImage = null;
+            ElapsedTime = TimeSpan.Zero;
+            IsGameActive = false;
+            IsCompleted = false;
+            _timerService.Reset();
+
+            bool flowControl = await startGame();
+            if (!flowControl)
+            {
+                return;
+            }
+        }
+
+        [RelayCommand]
+        public async Task BackAsync()
+        {
+            // log and navigate back
+            IsGameActive = false;
+            _timerService.Stop();
+
+            Util.Log("Navigating back to previous page.");
+
+            await Shell.Current.GoToAsync("..");
+        }
+
+        [RelayCommand]
+        public void PieceTapped(PuzzlePiece piece)
+        {
+            MovePiece(piece);
+            CheckWin();
+        }
+
     }
 }
