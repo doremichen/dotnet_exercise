@@ -14,6 +14,7 @@
  * 
  */
 using MauiPuzzleHeroGame.Models;
+using MauiPuzzleHeroGame.Utils;
 using Microsoft.Maui.Graphics.Platform;
 using SkiaSharp;
 using System;
@@ -30,7 +31,7 @@ namespace MauiPuzzleHeroGame.Core
         private static readonly Random _random = new ();
 
         private int _boardSize;
-        private PuzzleBoard _puzzleBoard;
+        private PuzzleBoard? _puzzleBoard;
         private PuzzlePiece? _selectedPiece; // reference to the currently selected piece at first time
 
         /**
@@ -41,20 +42,17 @@ namespace MauiPuzzleHeroGame.Core
          * 
          * returns: a PuzzleBoard object containing the shuffled puzzle pieces
          */
-        public async Task<PuzzleBoard> GeneratePuzzleAsync(string filePath, int boardSize)
+        public async Task<PuzzleBoard> GeneratePuzzleAsync(Stream imageStream, int boardSize)
         {
+            Util.Log($"[PuzzleGenerator] Generating puzzle of size {boardSize}x{boardSize}...");
+
             if (boardSize < 2)
                 throw new ArgumentException("Board size must be at least 2.");
-
-            if (!File.Exists(filePath))
-                throw new FileNotFoundException("Image file not found", filePath);
 
             return await Task.Run(() =>
             {
                 _boardSize = boardSize;
-
-                using var input = File.OpenRead(filePath);
-                using var original = SKBitmap.Decode(input);
+                using var original = SKBitmap.Decode(imageStream);
 
                 int pieceWidth = original.Width / boardSize;
                 int pieceHeight = original.Height / boardSize;
@@ -66,8 +64,8 @@ namespace MauiPuzzleHeroGame.Core
                 {
                     for (int col = 0; col < boardSize; col++)
                     {
-                        // cut the image piece
-                        var croppedImage = CropBitmap(original, col * pieceWidth, row * pieceHeight, pieceWidth, pieceHeight);
+                        // Crop the piece from the original image
+                        var buffer = CropBitmap(original, col * pieceWidth, row * pieceHeight, pieceWidth, pieceHeight);
 
                         pieces.Add(new PuzzlePiece
                         {
@@ -76,12 +74,17 @@ namespace MauiPuzzleHeroGame.Core
                             CorrectColumn = col,
                             CurrentRow = row,
                             CurrentColumn = col,
-                            ImagePart = ImageSource.FromStream(() => croppedImage)
+                            ImagePart = ImageSource.FromStream(() =>
+                            {
+                                var ms = new MemoryStream(buffer);
+                                ms.Position = 0;
+                                return ms;
+                            })
                         });
                     }
                 }
 
-                // shuffle pieces
+                // Shuffle the pieces
                 ShufflePieces(pieces, boardSize);
 
                 var board = new PuzzleBoard(boardSize);
@@ -89,6 +92,7 @@ namespace MauiPuzzleHeroGame.Core
                     board.Pieces.Add(p);
 
                 _puzzleBoard = board;
+                Util.Log("[PuzzleGenerator] Puzzle generation completed.");
 
                 return board;
             });
@@ -105,8 +109,10 @@ namespace MauiPuzzleHeroGame.Core
          * 
          * returns: MemoryStream containing the cropped image in Bitmap format
          */
-        private MemoryStream CropBitmap(SKBitmap original, int x, int y, int width, int height)
+        private byte[] CropBitmap(SKBitmap original, int x, int y, int width, int height)
         {
+            Util.Log($"[PuzzleGenerator] Cropping bitmap at ({x}, {y}) with size {width}x{height}...");
+
             var cropped = new SKBitmap(width, height);
             using (var canvas = new SKCanvas(cropped))
             {
@@ -116,12 +122,12 @@ namespace MauiPuzzleHeroGame.Core
             }
 
             using var image = SKImage.FromBitmap(cropped);
-            var ms = new MemoryStream();
-            image.Encode(SKEncodedImageFormat.Png, 100).SaveTo(ms);
-            ms.Position = 0;
-            return ms;
-        }
+            var data = image.Encode(SKEncodedImageFormat.Png, 100);
+            var buffer = data.ToArray();
 
+            Util.Log("[PuzzleGenerator] Cropping completed.");
+            return buffer;
+        }
         /**
          * Fisher-Yates shuffle algorithm to randomize the order of puzzle pieces
          * 
@@ -145,35 +151,48 @@ namespace MauiPuzzleHeroGame.Core
             }
         }
 
-        public void Shuffle()
+        public async Task<PuzzleBoard> Shuffle()
         {
-            ShufflePieces(_puzzleBoard.Pieces.ToList<PuzzlePiece>(), _boardSize);
-            // clear pieces and re-add to trigger UI update
-            var pieces = _puzzleBoard.Pieces.ToList<PuzzlePiece>();
-            _puzzleBoard.Pieces.Clear();
-            foreach (var p in pieces)
-                _puzzleBoard.Pieces.Add(p);
+            return await Task.Run(() =>
+            {
+                ShufflePieces(_puzzleBoard.Pieces.ToList<PuzzlePiece>(), _boardSize);
+                // clear pieces and re-add to trigger UI update
+                var pieces = _puzzleBoard.Pieces.ToList<PuzzlePiece>();
+                _puzzleBoard.Pieces.Clear();
+                foreach (var p in pieces)
+                    _puzzleBoard.Pieces.Add(p);
+                return _puzzleBoard;
+            });
         }
 
-        internal void MovePiece(PuzzlePiece piece)
+        internal PuzzleBoard? MovePiece(PuzzlePiece piece)
         {
+            // log
+            Util.Log($"[PuzzleGenerator] Moving piece ID {piece.Id}...");
+
             if (_puzzleBoard == null || piece == null)
-                return;
+            {
+                Util.Log("[PuzzleGenerator] Puzzle board or piece is null. Cannot move piece.");
+                return null;
+            }
+                
 
             // If no piece is selected, select the current piece
             if (_selectedPiece == null)
             {
+                Util.Log($"[PuzzleGenerator] Selecting piece ID {piece.Id}...");
                 _selectedPiece = piece;
                 piece.IsSelected = true;
-                return;
+                return null;
             }
 
             // If the same piece is selected again, deselect it
             if (_selectedPiece == piece)
             {
+                Util.Log($"[PuzzleGenerator] Deselecting piece ID {piece.Id}...");
                 piece.IsSelected = false;
                 _selectedPiece = null;
-                return;
+                return null;
             }
 
             // == swap the selected piece with the current piece ==
@@ -188,6 +207,8 @@ namespace MauiPuzzleHeroGame.Core
             // Deselect the piece after swapping
             _selectedPiece.IsSelected = false;
             _selectedPiece = null;
+
+            return _puzzleBoard;
         }
     }
 }

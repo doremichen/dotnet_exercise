@@ -58,11 +58,14 @@ namespace MauiPuzzleHeroGame.ViewModels
         };
 
 
-        public ObservableCollection<PuzzlePiece> PuzzlePieces { get; } = new();
+        public ObservableCollection<PuzzlePiece> PuzzlePieces { get; private set; } = new();
 
         // === Constructor ===
         public GameViewModel()
         {
+            // log
+            Util.Log("[GameViewModel] Initializing GameViewModel...");
+
             _imageService = new ImageService();
             _storageService = new StorageService();
             _timerService = new TimerService();
@@ -80,10 +83,23 @@ namespace MauiPuzzleHeroGame.ViewModels
         [RelayCommand]
         private async Task StartGameAsync()
         {
-            bool flowControl = await startGame();
-            if (!flowControl)
+            Util.Log("[StartGameAsync] Starting game...");
+
+            try
             {
-                return;
+                bool success = await startGame();
+                if (!success)
+                {
+                    Util.Log("[StartGameAsync] Game start failed.");
+                    return;
+                }
+
+                Util.Log("[StartGameAsync] Game started successfully.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"StartGameAsync fail: {ex.Message}");
+                Util.Log($"[StartGameAsync] Exception: {ex}");
             }
         }
 
@@ -91,45 +107,78 @@ namespace MauiPuzzleHeroGame.ViewModels
         {
             try
             {
+#if ANDROID || IOS
                 var path = await _imageService.PickFromGalleryAsync();
-                if (string.IsNullOrEmpty(path))
-                    return false;
+#else
+        string path = null;
+#endif
 
-                PuzzleImage = await _imageService.ResizeImageAsync(path, 600, 600);
+                // Resize + cache
+                var (puzzleImage, puzzleStream) = await _imageService.ResizeImageAsync(path, 600, 600);
 
-                _puzzleBoard = await _puzzleGenerator.GeneratePuzzleAsync(path, 3); // 預設 3x3
+                // Update PuzzleImage (UI Thread)
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    PuzzleImage = puzzleImage;
+                });
 
-                PuzzlePieces.Clear();
-                foreach (var p in _puzzleBoard.Pieces)
-                    PuzzlePieces.Add(p);
+                // generate puzzle board (Background Thread)
+                _puzzleBoard = await _puzzleGenerator.GeneratePuzzleAsync(puzzleStream, 3);
 
-                IsGameActive = true;
-                IsCompleted = false;
+                // UI update
+                await updateMainUI();
+
                 _timerService.Reset();
                 _timerService.Start();
+
+                return true;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Start game fail: {ex.Message}");
+                Util.Log($"[startGame] Exception: {ex}");
+                return false;
             }
-
-            return true;
         }
 
         [RelayCommand]
-        private void Shuffle()
+        private async Task ShuffleAsync()
         {
             if (_puzzleBoard == null)
                 return;
 
             try
             {
-                _puzzleGenerator.Shuffle();
+                _puzzleBoard = await _puzzleGenerator.Shuffle();
+                await updateMainUI();
+
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Shuffle fail: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// Update main UI
+        /// </summary>
+        /// <returns></returns>
+        /// Ensure this runs on the main thread
+        /// 
+        private async Task updateMainUI()
+        {
+            // update UI
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+
+                var newPieces = _puzzleBoard.Pieces.ToList();
+                PuzzlePieces = new ObservableCollection<PuzzlePiece>(newPieces);
+                OnPropertyChanged(nameof(PuzzlePieces)); // ui update
+
+
+                IsGameActive = true;
+                IsCompleted = false;
+            });
         }
 
         [RelayCommand]
@@ -154,14 +203,25 @@ namespace MauiPuzzleHeroGame.ViewModels
             }
         }
 
-        [RelayCommand]
         private void MovePiece(PuzzlePiece piece)
         {
+            //log
+            Util.Log($"[MovePiece] Moving piece: {piece.Id}");
+
             if (_puzzleBoard == null || piece == null)
+            {
+                Util.Log("[MovePiece] Invalid puzzle board or piece.");
                 return;
+            }
 
+            var newBoard = _puzzleGenerator.MovePiece(piece);
+            if (newBoard != null)
+            {
+                _puzzleBoard = newBoard;
+            }
 
-            _puzzleGenerator.MovePiece(piece);
+            // update UI
+            updateMainUI().Wait();
         }
 
         [RelayCommand]
@@ -211,18 +271,38 @@ namespace MauiPuzzleHeroGame.ViewModels
         [RelayCommand]
         public async Task BackAsync()
         {
-            // log and navigate back
-            IsGameActive = false;
-            _timerService.Stop();
+            try
+            {
+                // assure to run on main thread
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    IsGameActive = false;
+                    IsCompleted = false;
+                    PuzzlePieces.Clear();
+                    PuzzleImage = null;
+                    ElapsedTime = TimeSpan.Zero;
 
-            Util.Log("Navigating back to previous page.");
+                });
 
-            await Shell.Current.GoToAsync("..");
+                _timerService.Stop();
+
+                Util.Log("[GameViewModel]: Navigating back to previous page.");
+
+                // navigate back
+                await Shell.Current.GoToAsync("///MainPage");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"BackAsync failed: {ex.Message}");
+                Util.Log($"[BackAsync] Exception: {ex}");
+            }
         }
 
         [RelayCommand]
         public void PieceTapped(PuzzlePiece piece)
         {
+            // log
+            Util.Log($"[PieceTapped] Piece tapped: {piece.Id}");
             MovePiece(piece);
             CheckWin();
         }

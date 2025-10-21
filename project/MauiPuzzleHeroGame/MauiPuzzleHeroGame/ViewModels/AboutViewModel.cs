@@ -9,6 +9,7 @@
  */
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using MauiPuzzleHeroGame.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,7 +23,9 @@ namespace MauiPuzzleHeroGame.ViewModels
         [RelayCommand]
         private async Task CloseAsync()
         {
-            await Shell.Current.GoToAsync(".."); // back to previous page
+            // log
+            Util.Log("[AboutViewModel] Closing About Page...");
+            await Shell.Current.GoToAsync("///MainPage"); // back to previous page
         }
     }
 }
