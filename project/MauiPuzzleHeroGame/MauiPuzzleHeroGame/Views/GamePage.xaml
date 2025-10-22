@@ -6,10 +6,11 @@
              Title="GamePage">
     <ContentPage.ToolbarItems>
         <ToolbarItem Text="重玩"
-                     Command="{Binding RestartGameCommand}" />
-        <ToolbarItem Text="返回上一頁"
-                     Command="{Binding BackCommand}" />
+                 Command="{Binding RestartGameCommand}" />
+        <ToolbarItem Text="設定"
+                 Command="{Binding OpenSettingsCommand}" />
     </ContentPage.ToolbarItems>
+
     <VerticalStackLayout>
         <!-- Game main screen -->
         <ScrollView>

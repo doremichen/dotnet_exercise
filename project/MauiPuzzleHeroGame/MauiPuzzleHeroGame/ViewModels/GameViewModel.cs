@@ -15,6 +15,7 @@ using MauiPuzzleHeroGame.Core;
 using MauiPuzzleHeroGame.Models;
 using MauiPuzzleHeroGame.Services;
 using MauiPuzzleHeroGame.Utils;
+using MauiPuzzleHeroGame.Views;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -125,6 +126,8 @@ namespace MauiPuzzleHeroGame.ViewModels
 #else
                 string path = null;
 #endif
+                // get grid size from preferences
+                int gridSize = Preferences.Get(Util.PREFS_PUZZLE_GRID_SIZE, 3);
 
                 // Resize + cache
                 var (puzzleImage, puzzleStream) = await _imageService.ResizeImageAsync(path, 600, 600);
@@ -136,7 +139,7 @@ namespace MauiPuzzleHeroGame.ViewModels
                 });
 
                 // generate puzzle board (Background Thread)
-                _puzzleBoard = await _puzzleGenerator.GeneratePuzzleAsync(puzzleStream, 3);
+                _puzzleBoard = await _puzzleGenerator.GeneratePuzzleAsync(puzzleStream, gridSize);
 
                 // UI update
                 await updateMainUI();
@@ -313,28 +316,25 @@ namespace MauiPuzzleHeroGame.ViewModels
         {
             try
             {
-                // assure to run on main thread
-                await MainThread.InvokeOnMainThreadAsync(() =>
-                {
-                    IsGameActive = false;
-                    IsCompleted = false;
-                    PuzzlePieces.Clear();
-                    PuzzleImage = null;
-                    ElapsedTime = TimeSpan.Zero;
+                Util.Log("[GameViewModel] BackAsync triggered.");
 
-                });
-
+                // 停止計時（暫停遊戲）
                 _timerService.Stop();
+                IsGameActive = false;
 
-                Util.Log("[GameViewModel]: Navigating back to previous page.");
+                // 讀取偏好設定中最新的難度
+                int gridSize = Preferences.Get(Util.PREFS_PUZZLE_GRID_SIZE, 3);
 
-                // navigate back
-                await Shell.Current.GoToAsync("///MainPage");
+                Util.Log($"[GameViewModel] Returning from settings, gridSize = {gridSize}");
+
+                // 重新套用難度（會自動清空、重建拼圖）
+                await ApplyDifficultyAsync(gridSize);
+
+                Util.Log("[GameViewModel] BackAsync finished successfully.");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"BackAsync failed: {ex.Message}");
-                Util.Log($"[BackAsync] Exception: {ex}");
+                Util.Log($"[GameViewModel] BackAsync failed: {ex}");
             }
         }
 
@@ -345,6 +345,84 @@ namespace MauiPuzzleHeroGame.ViewModels
             Util.Log($"[PieceTapped] Piece tapped: {piece.Id}");
             MovePiece(piece);
             CheckWin();
+        }
+
+        [RelayCommand]
+        private async Task OpenSettingsAsync()
+        {
+            await Shell.Current.GoToAsync("///SettingsPage");
+        }
+
+        /// <summary>
+        /// 套用新的拼圖難度（依照使用者設定的格數重新生成）
+        /// </summary>
+        internal async Task ApplyDifficultyAsync(int gridSize)
+        {
+            try
+            {
+                Util.Log($"[GameViewModel] ApplyDifficultyAsync: Changing to {gridSize}x{gridSize}");
+
+                // 如果目前遊戲正在進行，先暫停計時
+                _timerService.Stop();
+                IsGameActive = false;
+
+                // 清除舊資料
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    PuzzlePieces.Clear();
+                    PuzzleImage = null;
+                    IsCompleted = false;
+                    ElapsedTime = TimeSpan.Zero;
+                });
+
+                // 重新開始遊戲（使用新的 gridSize）
+                await RestartWithNewGridSize(gridSize);
+
+                Util.Log($"[GameViewModel] Difficulty applied successfully: {gridSize}x{gridSize}");
+            }
+            catch (Exception ex)
+            {
+                Util.Log($"[GameViewModel] ApplyDifficultyAsync failed: {ex}");
+            }
+        }
+
+        /// <summary>
+        /// 依照新的 gridSize 重新生成拼圖
+        /// </summary>
+        private async Task RestartWithNewGridSize(int gridSize)
+        {
+            try
+            {
+#if ANDROID || IOS
+                var path = await _imageService.PickFromGalleryAsync();
+#else
+                string path = null;
+#endif
+                // Resize + cache
+                var (puzzleImage, puzzleStream) = await _imageService.ResizeImageAsync(path, 600, 600);
+
+                // 更新圖片
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    PuzzleImage = puzzleImage;
+                });
+
+                // 產生新的拼圖
+                _puzzleBoard = await _puzzleGenerator.GeneratePuzzleAsync(puzzleStream, gridSize);
+
+                // 更新 UI
+                await updateMainUI();
+
+                // 重啟計時器
+                _timerService.Reset();
+                _timerService.Start();
+
+                IsGameActive = true;
+            }
+            catch (Exception ex)
+            {
+                Util.Log($"[GameViewModel] RestartWithNewGridSize failed: {ex}");
+            }
         }
 
     }

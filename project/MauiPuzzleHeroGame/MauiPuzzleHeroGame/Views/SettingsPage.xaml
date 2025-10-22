@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:MauiPuzzleHeroGame.ViewModels"
+             xmlns:conv="clr-namespace:MauiPuzzleHeroGame.Converters"
+             x:Class="MauiPuzzleHeroGame.Views.SettingsPage"
+             Title="設定">
+    <ContentPage.Resources>
+        <!-- Converter resource -->
+        <conv:BoolToColorConverter x:Key="BoolToColorConverter"
+                                   SelectedBrushColor="LightSkyBlue"
+                                   UnselectedBrushColor="Transparent"/>
+    </ContentPage.Resources>
+
+    <ContentPage.BindingContext>
+        <vm:SettingsViewModel />
+    </ContentPage.BindingContext>
+
+    <VerticalStackLayout Padding="20" Spacing="12">
+        <Label Text="選擇拼圖難度"
+               FontSize="20"
+               HorizontalOptions="Center" />
+
+        <CollectionView ItemsSource="{Binding Difficulties}"
+                        SelectionMode="Single"
+                        SelectedItem="{Binding SelectedDifficulty, Mode=TwoWay}">
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical" ItemSpacing="8"/>
+            </CollectionView.ItemsLayout>
+
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border
+                        Stroke="{Binding IsSelected, Converter={StaticResource BoolToColorConverter}}"
+                        StrokeThickness="2"
+                        Padding="12"
+                        Margin="4"
+                        BackgroundColor="{AppThemeBinding Light='White', Dark='#222'}"
+                        StrokeShape="RoundRectangle 8">
+                        <HorizontalStackLayout>
+                            <Label Text="{Binding Name}"
+                                   FontSize="18"
+                                   VerticalOptions="Center"
+                                   HorizontalOptions="StartAndExpand" />
+                            <!-- 顯示打勾或選中標示（可選） -->
+                            <Label Text="✔"
+                                   IsVisible="{Binding IsSelected}"
+                                   VerticalOptions="Center"
+                                   HorizontalOptions="End"
+                                   TextColor="DarkBlue"
+                                   FontSize="18"/>
+                        </HorizontalStackLayout>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <HorizontalStackLayout HorizontalOptions="Center" Spacing="12">
+            <Button Text="OK"
+                    Command="{Binding SaveCommand}"
+                    WidthRequest="120"/>
+            <Button Text="取消"
+                    Command="{Binding CancelCommand}"
+                    WidthRequest="120"/>
+        </HorizontalStackLayout>
+    </VerticalStackLayout>
+</ContentPage>

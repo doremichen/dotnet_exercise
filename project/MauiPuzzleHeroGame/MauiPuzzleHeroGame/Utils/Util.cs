@@ -18,6 +18,10 @@ namespace MauiPuzzleHeroGame.Utils
 {
     public static class Util
     {
+        // sharedpreferences keys
+        public const string PREFS_PUZZLE_GRID_SIZE = "PuzzleGridSize";
+
+
         /**
          * Logger with timestamp
          */
