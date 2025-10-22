@@ -79,6 +79,16 @@ namespace MauiPuzzleHeroGame.ViewModels
             {
                 ElapsedTime = elapsed;
             };
+
+            startGame().ContinueWith(
+                t =>
+                {
+                    bool flowControl = t.Result;
+                    if (!flowControl)
+                    {
+                        Util.Log("[GameViewModel] Initial game start failed.");
+                    }
+                });
         }
 
         // === Commands ===
