@@ -54,7 +54,10 @@ namespace MauiPuzzleHeroGame.ViewModels
         [ObservableProperty]
         private GridItemsLayout puzzleLayout = new GridItemsLayout(ItemsLayoutOrientation.Vertical)
         {
-            Span = 3
+            Span = 3,
+            HorizontalItemSpacing = 0,
+            VerticalItemSpacing = 0
+
         };
 
 
@@ -110,7 +113,7 @@ namespace MauiPuzzleHeroGame.ViewModels
 #if ANDROID || IOS
                 var path = await _imageService.PickFromGalleryAsync();
 #else
-        string path = null;
+                string path = null;
 #endif
 
                 // Resize + cache
@@ -144,8 +147,17 @@ namespace MauiPuzzleHeroGame.ViewModels
         [RelayCommand]
         private async Task ShuffleAsync()
         {
-            if (_puzzleBoard == null)
+            bool flowControl = await ShufflePuzzule();
+            if (!flowControl)
+            {
                 return;
+            }
+        }
+
+        private async Task<bool> ShufflePuzzule()
+        {
+            if (_puzzleBoard == null)
+                return false;
 
             try
             {
@@ -157,6 +169,8 @@ namespace MauiPuzzleHeroGame.ViewModels
             {
                 Console.WriteLine($"Shuffle fail: {ex.Message}");
             }
+
+            return true;
         }
 
         /// <summary>
@@ -199,6 +213,22 @@ namespace MauiPuzzleHeroGame.ViewModels
                         PuzzlePieces.Clear();
                         PuzzleImage = null;
                         ElapsedTime = TimeSpan.Zero;
+
+                        // reset game
+                        Task<bool> task = startGame();
+                        // show result
+                        task.ContinueWith(_ =>
+                        {
+                            bool flowControl = task.Result;
+                            if (!flowControl)
+                            {
+                                // log
+                                Util.Log("[CheckWin] Failed to restart game after completion.");
+                                return;
+                            }
+
+                        });
+
                     }, TaskScheduler.FromCurrentSynchronizationContext());
             }
         }
