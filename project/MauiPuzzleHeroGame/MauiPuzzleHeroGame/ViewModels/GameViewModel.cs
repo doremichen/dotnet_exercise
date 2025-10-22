@@ -53,13 +53,7 @@ namespace MauiPuzzleHeroGame.ViewModels
 
 
         [ObservableProperty]
-        private GridItemsLayout puzzleLayout = new GridItemsLayout(ItemsLayoutOrientation.Vertical)
-        {
-            Span = 3,
-            HorizontalItemSpacing = 0,
-            VerticalItemSpacing = 0
-
-        };
+        private GridItemsLayout puzzleLayout = new GridItemsLayout(ItemsLayoutOrientation.Vertical);
 
 
         public ObservableCollection<PuzzlePiece> PuzzlePieces { get; private set; } = new();
@@ -361,6 +355,14 @@ namespace MauiPuzzleHeroGame.ViewModels
             try
             {
                 Util.Log($"[GameViewModel] ApplyDifficultyAsync: Changing to {gridSize}x{gridSize}");
+                // update puzzle layout span
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    PuzzleLayout.Span = gridSize;
+                    PuzzleLayout.HorizontalItemSpacing = 0;
+                    PuzzleLayout.VerticalItemSpacing = 0;
+                    OnPropertyChanged(nameof(PuzzleLayout));
+                });
 
                 // 如果目前遊戲正在進行，先暫停計時
                 _timerService.Stop();
