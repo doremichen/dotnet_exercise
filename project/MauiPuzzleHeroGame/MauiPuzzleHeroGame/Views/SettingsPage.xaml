@@ -56,7 +56,7 @@
         </CollectionView>
 
         <HorizontalStackLayout HorizontalOptions="Center" Spacing="12">
-            <Button Text="OK"
+            <Button Text="確定"
                     Command="{Binding SaveCommand}"
                     WidthRequest="120"/>
             <Button Text="取消"

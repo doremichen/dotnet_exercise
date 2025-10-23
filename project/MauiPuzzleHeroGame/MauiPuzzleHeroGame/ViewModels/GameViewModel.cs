@@ -74,16 +74,6 @@ namespace MauiPuzzleHeroGame.ViewModels
             {
                 ElapsedTime = elapsed;
             };
-
-            startGame().ContinueWith(
-                t =>
-                {
-                    bool flowControl = t.Result;
-                    if (!flowControl)
-                    {
-                        Util.Log("[GameViewModel] Initial game start failed.");
-                    }
-                });
         }
 
         // === Commands ===
@@ -348,7 +338,7 @@ namespace MauiPuzzleHeroGame.ViewModels
         }
 
         /// <summary>
-        /// 套用新的拼圖難度（依照使用者設定的格數重新生成）
+        /// Apply new puzzle difficulty (regenerate according to user-set grid size)
         /// </summary>
         internal async Task ApplyDifficultyAsync(int gridSize)
         {
@@ -364,11 +354,12 @@ namespace MauiPuzzleHeroGame.ViewModels
                     OnPropertyChanged(nameof(PuzzleLayout));
                 });
 
-                // 如果目前遊戲正在進行，先暫停計時
+                // Stop timer if game is active
                 _timerService.Stop();
                 IsGameActive = false;
 
-                // 清除舊資料
+           
+                // Clear old data
                 await MainThread.InvokeOnMainThreadAsync(() =>
                 {
                     PuzzlePieces.Clear();
@@ -377,7 +368,7 @@ namespace MauiPuzzleHeroGame.ViewModels
                     ElapsedTime = TimeSpan.Zero;
                 });
 
-                // 重新開始遊戲（使用新的 gridSize）
+                // This will also reset and start the timer
                 await RestartWithNewGridSize(gridSize);
 
                 Util.Log($"[GameViewModel] Difficulty applied successfully: {gridSize}x{gridSize}");
@@ -389,7 +380,7 @@ namespace MauiPuzzleHeroGame.ViewModels
         }
 
         /// <summary>
-        /// 依照新的 gridSize 重新生成拼圖
+        /// Generate new puzzle with new grid size
         /// </summary>
         private async Task RestartWithNewGridSize(int gridSize)
         {

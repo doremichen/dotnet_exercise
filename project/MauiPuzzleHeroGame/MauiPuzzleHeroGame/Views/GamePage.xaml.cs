@@ -16,23 +16,21 @@ public partial class GamePage : ContentPage
         this.BindingContext = _viewModel;
     }
 
-    private int _currentGridSize = 0;
     private GameViewModel _viewModel;
 
 
     protected override void OnAppearing()
     {
+        // Log
+        Util.Log("[GamePage] OnAppearing called.");
+
         base.OnAppearing();
 
         // get size form preferences
         int gridSize = Preferences.Get(Util.PREFS_PUZZLE_GRID_SIZE, 3);
 
-        // update game didplay if the size is changed
-        if (_currentGridSize != gridSize)
-        {
-            _currentGridSize = gridSize;
-            _ = _viewModel.ApplyDifficultyAsync(gridSize);
-        }
+        // update game didplay
+        _ = _viewModel.ApplyDifficultyAsync(gridSize);
 
     }
 }

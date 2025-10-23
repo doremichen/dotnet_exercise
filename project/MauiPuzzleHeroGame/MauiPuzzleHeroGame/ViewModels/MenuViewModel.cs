@@ -21,12 +21,15 @@ namespace MauiPuzzleHeroGame.ViewModels
 {
     public partial class MenuViewModel : ObservableObject
     {
+
+
         [RelayCommand]
         private async Task StartGameAsync()
         {
             // log the action
             Util.Log("Starting new game...");
             await Shell.Current.GoToAsync("///GamePage");
+
         }
 
         [RelayCommand]

@@ -16,7 +16,7 @@
                HorizontalTextAlignment="Center"
                LineBreakMode="WordWrap"/>
 
-        <Button Text="OK"
+        <Button Text="確定"
                 Command="{Binding CloseCommand}"
                 WidthRequest="150"
                 HorizontalOptions="Center"/>

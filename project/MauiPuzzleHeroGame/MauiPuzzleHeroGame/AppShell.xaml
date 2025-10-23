@@ -7,22 +7,22 @@
     Title="MauiPuzzleHeroGame">
 
     <ShellContent
-        Title="Home"
+        Title="主頁"
         ContentTemplate="{DataTemplate Views:MainPage}"
         Route="MainPage" />
 
     <ShellContent
-        Title="Game"
+        Title="遊戲"
         ContentTemplate="{DataTemplate Views:GamePage}"
         Route="GamePage" />
 
     <ShellContent
-        Title="About"
+        Title="關於"
         ContentTemplate="{DataTemplate Views:AboutPage}"
         Route="AboutPage" />
 
     <ShellContent
-        Title="Settings"
+        Title="設定"
         ContentTemplate="{DataTemplate Views:SettingsPage}"
         Route="SettingsPage" />
 
