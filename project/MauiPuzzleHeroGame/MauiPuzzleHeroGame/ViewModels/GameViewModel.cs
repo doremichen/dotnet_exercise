@@ -46,6 +46,9 @@ namespace MauiPuzzleHeroGame.ViewModels
         private TimeSpan? elapsedTime;
 
         [ObservableProperty]
+        private string elapsedTimeDisplay;
+
+        [ObservableProperty]
         private bool? isGameActive;
 
         [ObservableProperty]
@@ -73,7 +76,19 @@ namespace MauiPuzzleHeroGame.ViewModels
             _timerService.OnTick += (elapsed) =>
             {
                 ElapsedTime = elapsed;
+                ElapsedTimeDisplay = FormatTime(elapsed);
             };
+        }
+
+        private string FormatTime(TimeSpan? elapsed)
+        {
+            if (elapsed == null)
+                return "00:00:00";
+
+            return string.Format("{0:D2}:{1:D2}:{2:D2}",
+                elapsed?.Hours,
+                elapsed?.Minutes,
+                elapsed?.Seconds);
         }
 
         // === Commands ===
@@ -204,7 +219,7 @@ namespace MauiPuzzleHeroGame.ViewModels
                 IsGameActive = false;
                 _timerService.Stop();
 
-                Application.Current?.MainPage?.DisplayAlert("Congratulation", "Complete!!!", "OK")
+                Application.Current?.MainPage?.DisplayAlert("Congratulation", $"Complete!!! The toltal time: {FormatTime(ElapsedTime)}", "OK")
                     .ContinueWith(t =>
                     {
                         PuzzlePieces.Clear();
@@ -302,16 +317,16 @@ namespace MauiPuzzleHeroGame.ViewModels
             {
                 Util.Log("[GameViewModel] BackAsync triggered.");
 
-                // 停止計時（暫停遊戲）
+                // Save current game state if needed
                 _timerService.Stop();
                 IsGameActive = false;
 
-                // 讀取偏好設定中最新的難度
+                // Read the latest difficulty from preferences
                 int gridSize = Preferences.Get(Util.PREFS_PUZZLE_GRID_SIZE, 3);
 
                 Util.Log($"[GameViewModel] Returning from settings, gridSize = {gridSize}");
 
-                // 重新套用難度（會自動清空、重建拼圖）
+                // Apply the difficulty setting again (regenerates the puzzle)
                 await ApplyDifficultyAsync(gridSize);
 
                 Util.Log("[GameViewModel] BackAsync finished successfully.");

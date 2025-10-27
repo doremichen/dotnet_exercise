@@ -5,10 +5,17 @@
              x:Class="MauiPuzzleHeroGame.Views.GamePage"
              Title="GamePage">
     <ContentPage.ToolbarItems>
+        <ToolbarItem Text="{Binding ElapsedTimeDisplay}"
+                 Priority="0"
+                 Order="Primary" />
         <ToolbarItem Text="重玩"
-                 Command="{Binding RestartGameCommand}" />
+                 Command="{Binding RestartGameCommand}"
+                 Priority="1"
+                 Order="Primary" />
         <ToolbarItem Text="設定"
-                 Command="{Binding OpenSettingsCommand}" />
+                 Command="{Binding OpenSettingsCommand}"
+                 Priority="2"
+                 Order="Primary" />
     </ContentPage.ToolbarItems>
 
     <VerticalStackLayout>
