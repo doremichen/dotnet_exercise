@@ -158,9 +158,9 @@ namespace MauiPuzzleHeroGame.Services
                     var ms = new MemoryStream(buffer);
                     ms.Position = 0;
 #if WINDOWS
-                //// Save to cache
-                //await File.WriteAllBytesAsync(cachePath, ms.ToArray());
-                //Console.WriteLine($"[ImageService] Cached resized image at: {cachePath}");
+                    //// Save to cache
+                    File.WriteAllBytesAsync(cachePath, ms.ToArray());
+                    Console.WriteLine($"[ImageService] Cached resized image at: {cachePath}");
 #endif
                     return ms;
                 });

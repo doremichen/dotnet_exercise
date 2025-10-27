@@ -409,19 +409,19 @@ namespace MauiPuzzleHeroGame.ViewModels
                 // Resize + cache
                 var (puzzleImage, puzzleStream) = await _imageService.ResizeImageAsync(path, 600, 600);
 
-                // 更新圖片
+                // Update PuzzleImage (UI Thread)
                 await MainThread.InvokeOnMainThreadAsync(() =>
                 {
                     PuzzleImage = puzzleImage;
                 });
 
-                // 產生新的拼圖
+                // generate puzzle board (Background Thread)
                 _puzzleBoard = await _puzzleGenerator.GeneratePuzzleAsync(puzzleStream, gridSize);
 
-                // 更新 UI
+                // UI update
                 await updateMainUI();
 
-                // 重啟計時器
+                // Restart timer
                 _timerService.Reset();
                 _timerService.Start();
 
