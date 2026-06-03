@@ -9,4 +9,7 @@
 	<PackageReference Include="System.Diagnostics.PerformanceCounter" Version="7.0.0" />
 	<PackageReference Include="System.Management" Version="8.0.0" />
   </ItemGroup>
+  <ItemGroup>
+	<ProjectReference Include="..\MonitoringContracts\MonitoringContracts.csproj" />
+  </ItemGroup>
 </Project>

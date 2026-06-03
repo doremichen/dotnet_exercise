@@ -5,17 +5,14 @@
  *  Author: Adam chen (adapted)
  *  Date: 2025/07/16
  */
-using System;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
 using System.Text;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
-using System.Diagnostics;
-using System.Linq;
+using MonitoringContracts;
 
 namespace SystemMonitorApp
 {
@@ -128,7 +125,8 @@ namespace SystemMonitorApp
                         continue;
                     }
 
-                    var readTask = Task.Run(() => ClientReadLoopAsync(clientStream, ct));
+                    // start the async read loop directly (no extra Task.Run for IO-bound async methods)
+                    var readTask = ClientReadLoopAsync(clientStream, ct);
                     // keep write access via helper SendCommandAsync
                     await readTask;
                 }
@@ -206,13 +204,13 @@ namespace SystemMonitorApp
                         {
                             var md = env.Payload.Deserialize<MonitorData>();
                             if (md != null)
-                                Dispatcher.BeginInvoke(new Action(() => ApplyMonitorDataToUi(md)));
+                                await Dispatcher.BeginInvoke(new Action(() => ApplyMonitorDataToUi(md)));
                         }
                         else if (env.Type == "ProcessList")
                         {
                             var procs = env.Payload.Deserialize<ProcessInfo[]>();
                             if (procs != null)
-                                Dispatcher.BeginInvoke(new Action(() => processListView.ItemsSource = procs));
+                                await Dispatcher.BeginInvoke(new Action(() => processListView.ItemsSource = procs));
                         }
                         else if (env.Type == "CommandAck")
                         {
@@ -291,7 +289,6 @@ namespace SystemMonitorApp
         }
 
         private class Envelope { public string Type { get; set; } public JsonElement Payload { get; set; } }
-        private class ProcessInfo { public int Id { get; set; } public string ProcessName { get; set; } public double WorkingSetMB { get; set; } }
 
         // send a command envelope to service
         private async Task SendCommandAsync(string type, object payload)

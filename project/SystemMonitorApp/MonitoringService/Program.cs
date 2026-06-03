@@ -8,6 +8,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
+using MonitoringContracts;
 
 namespace MonitoringService
 {
@@ -28,7 +29,8 @@ namespace MonitoringService
 
             while (true)
             {
-                using (var server = new NamedPipeServerStream(PipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous))
+                // Allow multiple server instances to be created (use system max) to avoid "all pipe instances are in use" errors
+                using (var server = new NamedPipeServerStream(PipeName, PipeDirection.InOut, NamedPipeServerStream.MaxAllowedServerInstances, PipeTransmissionMode.Byte, PipeOptions.Asynchronous))
                 {
                     try
                     {
@@ -151,7 +153,11 @@ namespace MonitoringService
             {
                 if (cmd == "GetProcessList")
                 {
-                    var procs = Process.GetProcesses().Select(p => new { p.Id, p.ProcessName, WorkingSetMB = p.WorkingSet64 / 1024.0 / 1024.0 }).OrderByDescending(x => x.WorkingSetMB).Take(30).ToArray();
+                    var procs = Process.GetProcesses()
+                        .Select(p => new ProcessInfo { Id = p.Id, ProcessName = p.ProcessName, WorkingSetMB = p.WorkingSet64 / 1024.0 / 1024.0 })
+                        .OrderByDescending(x => x.WorkingSetMB)
+                        .Take(30)
+                        .ToArray();
                     var env = new Envelope { Type = "ProcessList", Payload = JsonSerializer.SerializeToElement(procs) };
                     SendEnvelope(server, writeLock, env);
                 }
@@ -221,20 +227,5 @@ namespace MonitoringService
         }
 
         private class Envelope { public string Type { get; set; } public JsonElement Payload { get; set; } }
-
-        private class MonitorData
-        {
-            public double CpuUsage { get; set; }
-            public float AvailableMemoryMB { get; set; }
-            public float TotalMemoryMB { get; set; }
-            public DiskInfo[] DiskInfos { get; set; }
-        }
-
-        private class DiskInfo
-        {
-            public string Name { get; set; }
-            public double TotalGB { get; set; }
-            public double FreeGB { get; set; }
-        }
     }
 }
