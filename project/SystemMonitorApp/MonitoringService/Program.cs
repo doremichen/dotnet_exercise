@@ -1,14 +1,9 @@
-using System;
+using MonitoringContracts;
 using System.Diagnostics;
-using System.IO;
 using System.IO.Pipes;
 using System.Management;
 using System.Text;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Linq;
-using MonitoringContracts;
 
 namespace MonitoringService
 {
@@ -20,41 +15,55 @@ namespace MonitoringService
     internal class Program
     {
         private const string PipeName = "SystemMonitorPipe";
-        private static PerformanceCounter cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
-        private static PerformanceCounter memoryCounter = new PerformanceCounter("Memory", "Available MBytes");
+        // PerformanceCounter can throw exceptions if the underlying counters
+        // are unavailable or if permissions are insufficient,
+        private static PerformanceCounter? cpuCounter;
+        private static PerformanceCounter? memoryCounter;
+
+
+        private static readonly SemaphoreSlim serverWriteSemaphore = new SemaphoreSlim(1, 1);
 
         static void Main(string[] args)
         {
-            Console.WriteLine("MonitoringService started.");
+            Debug.WriteLine("[INIT] MonitoringService are initializing counter...");
+            InitializeCounters();
 
             while (true)
             {
-                // Allow multiple server instances to be created (use system max) to avoid "all pipe instances are in use" errors
-                using (var server = new NamedPipeServerStream(PipeName, PipeDirection.InOut, NamedPipeServerStream.MaxAllowedServerInstances, PipeTransmissionMode.Byte, PipeOptions.Asynchronous))
+                // Allow multiple server instances to be created (use system max)
+                // to avoid "all pipe instances are in use" errors
+                using (var server = new NamedPipeServerStream(
+                    PipeName,
+                    PipeDirection.InOut,
+                    NamedPipeServerStream.MaxAllowedServerInstances,
+                    PipeTransmissionMode.Byte,
+                    PipeOptions.Asynchronous))
                 {
                     try
                     {
-                        Console.WriteLine("Waiting for UI client to connect...");
+                        Debug.WriteLine("Waiting for UI client to connect...");
                         server.WaitForConnection();
-                        Console.WriteLine("UI connected, starting worker tasks...");
+                        Debug.WriteLine("UI connected, starting worker tasks...");
 
                         var cts = new CancellationTokenSource();
-                        var writeLock = new object();
                         int intervalMs = 1000;
 
                         // writer task: periodically send MonitorData and also send responses to commands
-                        var writer = Task.Run(() => WriterLoopAsync(server, writeLock, () => intervalMs, cts.Token));
-                        // reader task: receive commands from client
-                        var reader = Task.Run(() => ReaderLoopAsync(server, writeLock, (cmd, payload) => HandleCommand(cmd, payload, server, writeLock, ref intervalMs), cts.Token));
+                        var writer = WriterLoopAsync(server, () => intervalMs, cts.Token);
+                        var reader = ReaderLoopAsync(server, (cmd, payload) =>
+                        {
+                            HandleCommand(cmd, payload, server, ref intervalMs);
+                        }, cts.Token);
 
-                        Task.WaitAny(new[] { writer, reader });
-                        // cancel the other
+                        // wait for either task to fail (e.g. due to disconnection),
+                        // then cancel the other and restart the loop to wait for a new connection
+                        Task.WaitAll(new[] { writer, reader }, Timeout.Infinite);
+
                         cts.Cancel();
-                        Task.WaitAll(new[] { writer, reader }, 2000);
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Pipe accept/connection failed: {ex}");
+                        Debug.WriteLine($"Pipe accept/connection failed: {ex}");
                     }
                     finally
                     {
@@ -66,16 +75,54 @@ namespace MonitoringService
             }
         }
 
-        private static async Task WriterLoopAsync(PipeStream server, object writeLock, Func<int> getIntervalMs, CancellationToken ct)
+        private static void InitializeCounters()
         {
+            try
+            {
+                //
+                cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
+                cpuCounter.NextValue();
+                Debug.WriteLine("[SUCCESS] CPU 效能計數器初始化成功。");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[CRITICAL] CPU 計數器初始化失敗 (可能權限不足): {ex.Message}");
+            }
+
+            try
+            {
+                memoryCounter = new PerformanceCounter("Memory", "Available MBytes");
+                memoryCounter.NextValue();
+                Debug.WriteLine("[SUCCESS] Memory 效能計數器初始化成功。");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[CRITICAL] Memory 計數器初始化失敗: {ex.Message}");
+            }
+        }
+
+
+        private static async Task WriterLoopAsync(PipeStream server, Func<int> getIntervalMs, CancellationToken ct)
+        {
+            Debug.WriteLine("[WRITER] WriterLoop started.");
             try
             {
                 while (server.IsConnected && !ct.IsCancellationRequested)
                 {
+                    double cpuVal = -1;
+                    float memVal = -1;
+
+                    try { if (cpuCounter != null) cpuVal = cpuCounter.NextValue(); }
+                    catch (Exception ex) { Debug.WriteLine($"[DATA ERROR] 讀取 CPU 失敗: {ex.Message}"); }
+
+                    try { if (memoryCounter != null) memVal = memoryCounter.NextValue(); }
+                    catch (Exception ex) { Debug.WriteLine($"[DATA ERROR] 讀取 Memory 失敗: {ex.Message}"); }
+
+
                     var data = new MonitorData
                     {
-                        CpuUsage = cpuCounter.NextValue(),
-                        AvailableMemoryMB = memoryCounter.NextValue(),
+                        CpuUsage = cpuVal,
+                        AvailableMemoryMB = memVal,
                         TotalMemoryMB = GetTotalMemoryInMBytes(),
                         DiskInfos = GetDiskInfos()
                     };
@@ -84,24 +131,36 @@ namespace MonitoringService
                     var bytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(envelope));
                     var len = BitConverter.GetBytes(bytes.Length);
 
-                    lock (writeLock)
+                    await serverWriteSemaphore.WaitAsync(ct);
+                    try
                     {
-                        server.Write(len, 0, len.Length);
-                        server.Write(bytes, 0, bytes.Length);
-                        try { server.Flush(); } catch { }
+                        if (server.IsConnected)
+                        {
+                            await server.WriteAsync(len, 0, len.Length, ct);
+                            await server.WriteAsync(bytes, 0, bytes.Length, ct);
+                            await server.FlushAsync(ct);
+                            Debug.WriteLine($"[SEND] 已發送 MonitorData, 長度: {bytes.Length} bytes. CPU: {cpuVal:F1}%, RAM Free: {memVal}MB");
+
+                        }
                     }
+                    finally
+                    {
+                        serverWriteSemaphore.Release();
+                    }
+
 
                     await Task.Delay(getIntervalMs(), ct);
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"WriterLoop error: {ex.Message}");
+                Debug.WriteLine($"WriterLoop error: {ex.Message}");
             }
         }
 
-        private static async Task ReaderLoopAsync(PipeStream server, object writeLock, Action<string, JsonElement> onCommand, CancellationToken ct)
+        private static async Task ReaderLoopAsync(PipeStream server, Action<string, JsonElement> onCommand, CancellationToken ct)
         {
+            Debug.WriteLine("[READER] ReaderLoop started.");
             var lenBuf = new byte[4];
             try
             {
@@ -121,7 +180,7 @@ namespace MonitoringService
                     while (rec < msgLen)
                     {
                         int r = await server.ReadAsync(payload.AsMemory(rec, msgLen - rec), ct);
-                        if (r == 0) return;
+                        if (r == 0) return; // disconnected
                         rec += r;
                     }
 
@@ -133,22 +192,30 @@ namespace MonitoringService
                             string type = t.GetString() ?? string.Empty;
                             if (doc.RootElement.TryGetProperty("Payload", out var p))
                             {
+                                Console.WriteLine($"[RECEIVE] 收到 Client 指令: {type}");
                                 onCommand(type, p);
                             }
                         }
                     }
-                    catch (JsonException) { }
+                    catch (JsonException ex)
+                    {
+                        Debug.WriteLine($"[JSON ERROR] 解析 Client 訊息失敗: {ex.Message}");
+                    }
                 }
             }
-            catch (OperationCanceledException) { }
+            catch (OperationCanceledException ex)
+            {
+                Debug.WriteLine($"ReaderLoop cancelled: {ex.Message}");
+            }
             catch (Exception ex)
             {
-                Console.WriteLine($"ReaderLoop error: {ex.Message}");
+                Debug.WriteLine($"ReaderLoop error: {ex.Message}");
             }
         }
 
-        private static void HandleCommand(string cmd, JsonElement payload, PipeStream server, object writeLock, ref int intervalMs)
+        private static void HandleCommand(string cmd, JsonElement payload, PipeStream server, ref int intervalMs)
         {
+            Debug.WriteLine($"[COMMAND] Handling command: {cmd}");
             try
             {
                 if (cmd == "GetProcessList")
@@ -159,13 +226,13 @@ namespace MonitoringService
                         .Take(30)
                         .ToArray();
                     var env = new Envelope { Type = "ProcessList", Payload = JsonSerializer.SerializeToElement(procs) };
-                    SendEnvelope(server, writeLock, env);
+                    SendEnvelope(server, env);
                 }
                 else if (cmd == "TriggerGC")
                 {
                     GC.Collect();
                     var env = new Envelope { Type = "CommandAck", Payload = JsonSerializer.SerializeToElement(new { Command = "TriggerGC", Status = "OK" }) };
-                    SendEnvelope(server, writeLock, env);
+                    SendEnvelope(server, env);
                 }
                 else if (cmd == "SetIntervalSeconds")
                 {
@@ -173,59 +240,81 @@ namespace MonitoringService
                     {
                         intervalMs = Math.Max(200, seconds * 1000);
                         var env = new Envelope { Type = "CommandAck", Payload = JsonSerializer.SerializeToElement(new { Command = "SetIntervalSeconds", Status = "OK", Seconds = seconds }) };
-                        SendEnvelope(server, writeLock, env);
+                        SendEnvelope(server, env);
                     }
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"HandleCommand error: {ex.Message}");
+                Debug.WriteLine($"HandleCommand error: {ex.Message}");
             }
         }
 
-        private static void SendEnvelope(PipeStream server, object writeLock, Envelope env)
+        private static void SendEnvelope(PipeStream server, Envelope env)
         {
+            Debug.WriteLine($"[SEND] Sending envelope of type: {env.Type}");
             try
             {
                 var bytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(env));
                 var len = BitConverter.GetBytes(bytes.Length);
-                lock (writeLock)
+                serverWriteSemaphore.Wait();
+                try
                 {
-                    server.Write(len, 0, len.Length);
-                    server.Write(bytes, 0, bytes.Length);
-                    try { server.Flush(); } catch { }
+                    if (server.IsConnected)
+                    {
+                        server.Write(len, 0, len.Length);
+                        server.Write(bytes, 0, bytes.Length);
+                        server.Flush();
+                    }
+                }
+                finally
+                {
+                    serverWriteSemaphore.Release();
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"SendEnvelope failed: {ex.Message}");
+                Debug.WriteLine($"SendEnvelope failed: {ex.Message}");
             }
         }
 
         private static float GetTotalMemoryInMBytes()
         {
-            var searcher = new ManagementObjectSearcher("SELECT TotalPhysicalMemory FROM Win32_ComputerSystem");
-            foreach (var obj in searcher.Get())
+            Debug.WriteLine("[INFO] Retrieving total physical memory via WMI...");
+            try
             {
-                if (obj["TotalPhysicalMemory"] is ulong totalMemory)
+                using (var searcher = new ManagementObjectSearcher("SELECT TotalPhysicalMemory FROM Win32_ComputerSystem"))
                 {
-                    return totalMemory / 1024f / 1024f;
+                    foreach (var obj in searcher.Get())
+                    {
+                        if (obj["TotalPhysicalMemory"] is ulong totalMemory)
+                        {
+                            return totalMemory / 1024f / 1024f;
+                        }
+                    }
                 }
             }
+            catch { }
             return 0;
         }
 
         private static DiskInfo[] GetDiskInfos()
         {
-            var drives = DriveInfo.GetDrives().Where(d => d.IsReady).Select(d => new DiskInfo
+            try
             {
-                Name = d.Name,
-                TotalGB = d.TotalSize / (1024.0 * 1024 * 1024),
-                FreeGB = d.TotalFreeSpace / (1024.0 * 1024 * 1024)
-            }).ToArray();
-            return drives;
+                return DriveInfo.GetDrives()
+                    .Where(d => d.IsReady)
+                    .Select(d => new DiskInfo
+                    {
+                        Name = d.Name,
+                        TotalGB = d.TotalSize / (1024.0 * 1024 * 1024),
+                        FreeGB = d.TotalFreeSpace / (1024.0 * 1024 * 1024)
+                    }).ToArray();
+            }
+            catch
+            {
+                return Array.Empty<DiskInfo>();
+            }
         }
-
-        private class Envelope { public string Type { get; set; } public JsonElement Payload { get; set; } }
     }
 }

@@ -1,4 +1,4 @@
-using System;
+using System.Text.Json;
 
 namespace MonitoringContracts
 {
@@ -26,4 +26,6 @@ namespace MonitoringContracts
         public float TotalMemoryMB { get; set; }
         public DiskInfo[]? DiskInfos { get; set; }
     }
+
+    public class Envelope { public string Type { get; set; } public JsonElement Payload { get; set; } }
 }

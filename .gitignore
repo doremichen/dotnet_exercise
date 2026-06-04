@@ -45,3 +45,6 @@ dump.txt
 
 # note
 [Nn]ote.txt
+
+# subdirect md file
+project/SystemMonitorApp/*.md
