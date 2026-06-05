@@ -1,3 +1,26 @@
+// ============================================================================
+// Copyright (c) 2026 AdamChen. All rights reserved.
+// Licensed under the MIT License. See LICENSE file in the project root for details.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+// ============================================================================
+
 using MonitoringContracts;
 using System.Diagnostics;
 using System.IO.Pipes;
@@ -16,16 +39,16 @@ namespace MonitoringService
     {
         private const string PipeName = "SystemMonitorPipe";
         // PerformanceCounter can throw exceptions if the underlying counters
-        // are unavailable or if permissions are insufficient,
-        private static PerformanceCounter? cpuCounter;
-        private static PerformanceCounter? memoryCounter;
+        // are unavailable or if permissions are insufficient.
+        private static PerformanceCounter? _cpuCounter;
+        private static PerformanceCounter? _memoryCounter;
 
 
-        private static readonly SemaphoreSlim serverWriteSemaphore = new SemaphoreSlim(1, 1);
+        private static readonly SemaphoreSlim ServerWriteSemaphore = new SemaphoreSlim(1, 1);
 
         static void Main(string[] args)
         {
-            Debug.WriteLine("[INIT] MonitoringService are initializing counter...");
+            Debug.WriteLine("[INIT] MonitoringService is initializing counters...");
             InitializeCounters();
 
             while (true)
@@ -79,25 +102,24 @@ namespace MonitoringService
         {
             try
             {
-                //
-                cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
-                cpuCounter.NextValue();
-                Debug.WriteLine("[SUCCESS] CPU 效能計數器初始化成功。");
+                _cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
+                _cpuCounter.NextValue();
+                Debug.WriteLine("[SUCCESS] CPU performance counter initialized successfully.");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[CRITICAL] CPU 計數器初始化失敗 (可能權限不足): {ex.Message}");
+                Debug.WriteLine($"[CRITICAL] CPU counter initialization failed (possibly insufficient permissions): {ex.Message}");
             }
 
             try
             {
-                memoryCounter = new PerformanceCounter("Memory", "Available MBytes");
-                memoryCounter.NextValue();
-                Debug.WriteLine("[SUCCESS] Memory 效能計數器初始化成功。");
+                _memoryCounter = new PerformanceCounter("Memory", "Available MBytes");
+                _memoryCounter.NextValue();
+                Debug.WriteLine("[SUCCESS] Memory performance counter initialized successfully.");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[CRITICAL] Memory 計數器初始化失敗: {ex.Message}");
+                Debug.WriteLine($"[CRITICAL] Memory counter initialization failed: {ex.Message}");
             }
         }
 
@@ -112,11 +134,11 @@ namespace MonitoringService
                     double cpuVal = -1;
                     float memVal = -1;
 
-                    try { if (cpuCounter != null) cpuVal = cpuCounter.NextValue(); }
-                    catch (Exception ex) { Debug.WriteLine($"[DATA ERROR] 讀取 CPU 失敗: {ex.Message}"); }
+                    try { if (_cpuCounter != null) cpuVal = _cpuCounter.NextValue(); }
+                    catch (Exception ex) { Debug.WriteLine($"[DATA ERROR] Failed to read CPU: {ex.Message}"); }
 
-                    try { if (memoryCounter != null) memVal = memoryCounter.NextValue(); }
-                    catch (Exception ex) { Debug.WriteLine($"[DATA ERROR] 讀取 Memory 失敗: {ex.Message}"); }
+                    try { if (_memoryCounter != null) memVal = _memoryCounter.NextValue(); }
+                    catch (Exception ex) { Debug.WriteLine($"[DATA ERROR] Failed to read Memory: {ex.Message}"); }
 
 
                     var data = new MonitorData
@@ -131,7 +153,7 @@ namespace MonitoringService
                     var bytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(envelope));
                     var len = BitConverter.GetBytes(bytes.Length);
 
-                    await serverWriteSemaphore.WaitAsync(ct);
+                    await ServerWriteSemaphore.WaitAsync(ct);
                     try
                     {
                         if (server.IsConnected)
@@ -139,13 +161,13 @@ namespace MonitoringService
                             await server.WriteAsync(len, 0, len.Length, ct);
                             await server.WriteAsync(bytes, 0, bytes.Length, ct);
                             await server.FlushAsync(ct);
-                            Debug.WriteLine($"[SEND] 已發送 MonitorData, 長度: {bytes.Length} bytes. CPU: {cpuVal:F1}%, RAM Free: {memVal}MB");
+                            Debug.WriteLine($"[SEND] MonitorData sent, length: {bytes.Length} bytes. CPU: {cpuVal:F1}%, RAM Free: {memVal}MB");
 
                         }
                     }
                     finally
                     {
-                        serverWriteSemaphore.Release();
+                        ServerWriteSemaphore.Release();
                     }
 
 
@@ -192,14 +214,14 @@ namespace MonitoringService
                             string type = t.GetString() ?? string.Empty;
                             if (doc.RootElement.TryGetProperty("Payload", out var p))
                             {
-                                Console.WriteLine($"[RECEIVE] 收到 Client 指令: {type}");
+                                Console.WriteLine($"[RECEIVE] Received client command: {type}");
                                 onCommand(type, p);
                             }
                         }
                     }
                     catch (JsonException ex)
                     {
-                        Debug.WriteLine($"[JSON ERROR] 解析 Client 訊息失敗: {ex.Message}");
+                        Debug.WriteLine($"[JSON ERROR] Failed to parse client message: {ex.Message}");
                     }
                 }
             }
@@ -257,7 +279,7 @@ namespace MonitoringService
             {
                 var bytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(env));
                 var len = BitConverter.GetBytes(bytes.Length);
-                serverWriteSemaphore.Wait();
+                ServerWriteSemaphore.Wait();
                 try
                 {
                     if (server.IsConnected)
@@ -269,7 +291,7 @@ namespace MonitoringService
                 }
                 finally
                 {
-                    serverWriteSemaphore.Release();
+                    ServerWriteSemaphore.Release();
                 }
             }
             catch (Exception ex)

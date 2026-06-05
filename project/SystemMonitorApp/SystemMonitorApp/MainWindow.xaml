@@ -5,23 +5,23 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SystemMonitorApp"
         mc:Ignorable="d"
-        Title="系統監控" Height="450" Width="800">
+        Title="System Monitor" Height="450" Width="800">
     <StackPanel Margin="20" Orientation="Vertical">
-        <TextBlock Text="CPU 使用率：" FontWeight="Bold"/>
+        <TextBlock Text="CPU Usage:" FontWeight="Bold"/>
         <ProgressBar x:Name="cpuBar" Height="20" Maximum="100"/>
         <TextBlock x:Name="cpuText" Margin="0,5"/>
 
-        <TextBlock Text="記憶體使用：" FontWeight="Bold" Margin="0,10,0,0"/>
+        <TextBlock Text="Memory Usage:" FontWeight="Bold" Margin="0,10,0,0"/>
         <ProgressBar x:Name="ramBar" Height="20" Maximum="100"/>
         <TextBlock x:Name="ramText" Margin="0,5"/>
 
-        <TextBlock Text="硬碟使用：" FontWeight="Bold" Margin="0,10,0,0"/>
+        <TextBlock Text="Disk Usage:" FontWeight="Bold" Margin="0,10,0,0"/>
         <ItemsControl x:Name="diskInfoList"/>
 
         <WrapPanel Margin="0,10,0,0">
-            <Button Content="最佳化記憶體 (Service)" Margin="0,0,10,0" Height="30" Width="180" Click="TriggerServiceGC_Click"/>
-            <Button Content="取得程序清單" Margin="0,0,10,0" Height="30" Width="120" Click="RequestProcessList_Click"/>
-            <TextBlock VerticalAlignment="Center" Margin="10,0,0,0">更新間隔 (秒):</TextBlock>
+            <Button Content="Optimize Memory (Service)" Margin="0,0,10,0" Height="30" Width="180" Click="TriggerServiceGC_Click"/>
+            <Button Content="Get Process List" Margin="0,0,10,0" Height="30" Width="120" Click="RequestProcessList_Click"/>
+            <TextBlock VerticalAlignment="Center" Margin="10,0,0,0">Update Interval (sec):</TextBlock>
             <ComboBox x:Name="intervalCombo" Width="80" Margin="5,0,0,0" SelectionChanged="IntervalCombo_SelectionChanged">
                 <ComboBoxItem>1</ComboBoxItem>
                 <ComboBoxItem>2</ComboBoxItem>
@@ -40,6 +40,6 @@
             </ListView.View>
         </ListView>
 
-        <Button Content="關閉應用程式" Margin="0,5,0,0" Height="30" Width="150" HorizontalAlignment="Left" Click="CloseApp_Click"/>
+        <Button Content="Close Application" Margin="0,5,0,0" Height="30" Width="150" HorizontalAlignment="Left" Click="CloseApp_Click"/>
     </StackPanel>
 </Window>
