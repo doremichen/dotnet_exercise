@@ -1,11 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
 		<TargetFramework>net8.0-windows</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
+
 		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-		<CopyToSystemMonitorAppServices>true</CopyToSystemMonitorAppServices>
+		<PublishSingleFile>true</PublishSingleFile>
+		<SelfContained>false</SelfContained>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -17,18 +20,8 @@
 		<ProjectReference Include="..\MonitoringContracts\MonitoringContracts.csproj" />
 	</ItemGroup>
 
-	<Target Name="PublishToSystemMonitorApp" AfterTargets="Build" Condition="'$(CopyToSystemMonitorAppServices)' == 'true'">
-		<PropertyGroup>
-			<SystemMonitorAppBinDir>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\SystemMonitorApp\bin\$(Configuration)\net8.0-windows'))</SystemMonitorAppBinDir>
-			<SystemMonitorAppServicesDir>$(SystemMonitorAppBinDir)\Services</SystemMonitorAppServicesDir>
-		</PropertyGroup>
-
-		<Exec Command="dotnet publish &quot;$(MSBuildProjectFullPath)&quot; -c $(Configuration) -f net8.0-windows -o &quot;$(SystemMonitorAppServicesDir)&quot; --no-build" />
-
-		<Message Text="[SUCCESS] MonitoringService 及其所有相依套件已成功 Publish 至 $(SystemMonitorAppServicesDir)" Importance="high" />
-	</Target>
-
 	<Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-		<Exec Command="taskkill /f /fi &quot;imagename eq MonitoringService*&quot; 2&gt;nul&#xD;&#xA;taskkill /f /fi &quot;imagename eq dotnet*&quot; 2&gt;nul&#xD;&#xA;exit 0" />
+		<Exec Command="taskkill /f /fi &quot;imagename eq MonitoringService*&quot; 2&gt;nul&#xD;&#xA;exit 0" />
 	</Target>
+
 </Project>

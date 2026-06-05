@@ -12,169 +12,169 @@ using System.IO.Pipes;
 using System.Text;
 using System.Text.Json;
 using System.Windows;
-using System.Windows.Threading;
 
 namespace SystemMonitorApp
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
         private const string PipeName = "SystemMonitorPipe";
         private CancellationTokenSource? cts;
         private Process? monitoringProcess;
         private NamedPipeClientStream? clientStream;
-        // lock for synchronizing writes to the pipe, since multiple UI actions could trigger commands
         private readonly SemaphoreSlim clientWriteSemaphore = new SemaphoreSlim(1, 1);
-
 
         public MainWindow()
         {
             InitializeComponent();
-            // Try to start monitoring service process
-            StartMonitoringService();
-            // Start background task to connect to the service and handle bidirectional messages
+
             cts = new CancellationTokenSource();
-            Task.Run(() => RunBidirectionalClientAsync(cts.Token));
+
+            // KISS 原則：不要在建構子同步做 IO/進程啟動。
+            // 直接丟給背景 Task，順序明朗，UI 秒開不卡死，偵錯管道有充裕時間接管！
+            Task.Run(async () =>
+            {
+                //#if !DEBUG
+                //                // 讓附加進程的提示視窗在背景執行緒跳出，完全不卡死 UI 渲染
+                //                System.Windows.MessageBox.Show("請先去 Visual Studio 附加此進程，再點擊確定開始啟動 Service！");
+                //#endif
+                // 先啟動 Service，再連接 Pipe
+                StartMonitoringService();
+                await RunBidirectionalClientAsync(cts.Token);
+            });
         }
-
-
 
         private void StartMonitoringService()
         {
+            // 改用 Trace.WriteLine，WPF 視窗程式不論何時附加，VS Debug 視窗都看得到！
+            Trace.WriteLine("[INFO] 開始執行 StartMonitoringService...");
             try
             {
                 if (monitoringProcess != null && !monitoringProcess.HasExited)
                 {
-                    Debug.WriteLine("[INFO] MonitoringService 已經在執行中。");
+                    Trace.WriteLine("[INFO] MonitoringService 已經在執行中。");
                     return;
                 }
 
                 var baseDir = AppContext.BaseDirectory;
-
-                // Priority 1: Look in the bundled Services subfolder (produced by build integration)
                 var servicesDir = Path.Combine(baseDir, "Services");
+
                 var candidates = new[]
                 {
-                    Path.Combine(servicesDir, "MonitoringService.dll"),
                     Path.Combine(servicesDir, "MonitoringService.exe"),
-                    // Fallback: development paths for running from Visual Studio
-                    Path.Combine(baseDir, "..", "..", "..", "MonitoringService", "bin", "Debug", "net8.0", "MonitoringService.dll"),
+                    Path.Combine(servicesDir, "MonitoringService.dll"),
+                    Path.Combine(baseDir, "MonitoringService.exe"),
+                    Path.Combine(baseDir, "MonitoringService.dll"),
+                    // Fallback: 開發環境相對路徑
                     Path.Combine(baseDir, "..", "..", "..", "MonitoringService", "bin", "Debug", "net8.0", "MonitoringService.exe"),
+                    Path.Combine(baseDir, "..", "..", "..", "MonitoringService", "bin", "Debug", "net8.0", "MonitoringService.dll"),
                 };
 
                 string? found = candidates.FirstOrDefault(File.Exists);
                 if (found == null)
                 {
-                    Debug.WriteLine("[ERROR] 啟動失敗：找不到任何 MonitoringService 的檔案路徑。");
-                    return; // nothing to start
+                    Trace.WriteLine("[ERROR] 啟動失敗：找不到任何 MonitoringService 的檔案路徑。");
+                    return;
                 }
 
                 string workingDir = Path.GetDirectoryName(found) ?? baseDir;
-                string arguments = string.Empty;
+                string ext = Path.GetExtension(found).ToLower();
 
-                // Prefer running dll via dotnet to ensure proper assembly resolution
-                if (found.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) || found.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                var psi = new ProcessStartInfo
                 {
-                    var psi = new ProcessStartInfo
-                    {
-                        FileName = "dotnet",
-                        Arguments = '"' + found + '"' + (string.IsNullOrWhiteSpace(arguments) ? string.Empty : " " + arguments),
-                        WorkingDirectory = workingDir,
-                        UseShellExecute = false,
-                        CreateNoWindow = true, // run hidden
+                    WorkingDirectory = workingDir,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
+                };
 
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true
-                    };
-
-                    Debug.WriteLine($"[INFO] 嘗試啟動 Service，路徑: {found}");
-                    monitoringProcess = new Process { StartInfo = psi };
-                    // Capture output for debugging purposes;
-                    // in production consider logging to a file instead
-                    monitoringProcess.OutputDataReceived += (sender, e) =>
-                    {
-                        if (!string.IsNullOrEmpty(e.Data))
-                        {
-                            Debug.WriteLine($"[SERVICE CONSOLE] {e.Data}");
-                        }
-                    };
-                    monitoringProcess.ErrorDataReceived += (sender, e) =>
-                    {
-                        if (!string.IsNullOrEmpty(e.Data))
-                        {
-                            Debug.WriteLine($"[SERVICE ERROR CONSOLE] {e.Data}");
-                        }
-                    };
-
-                    monitoringProcess.Start();
-
-                    // Begin async read of output streams
-                    monitoringProcess.BeginOutputReadLine();
-                    monitoringProcess.BeginErrorReadLine();
-
-                    // 【新增：確認啟動成功/失敗的 Log 機制】
-                    if (monitoringProcess != null)
-                    {
-                        // wait a short moment to see if the process exits immediately with an error
-                        bool exitedEarly = monitoringProcess.WaitForExit(500);
-                        if (exitedEarly && monitoringProcess.ExitCode != 0)
-                        {
-                            Debug.WriteLine($"[ERROR] Service 啟動後異常退出，Exit Code: {monitoringProcess.ExitCode}");
-                        }
-                        else
-                        {
-                            Debug.WriteLine($"[SUCCESS] MonitoringService 成功啟動。PID: {monitoringProcess.Id}");
-                        }
-                    }
-                    else
-                    {
-                        Debug.WriteLine("[ERROR] Process.Start 回傳 null，Service 啟動失敗。");
-                    }
+                if (ext == ".exe")
+                {
+                    psi.FileName = found;
+                    psi.Arguments = string.Empty;
                 }
+                else
+                {
+                    psi.FileName = "dotnet";
+                    psi.Arguments = $"\"{found}\"";
+                }
+
+                Trace.WriteLine($"[INFO] 最終判定路徑: {found}，啟動命令: {psi.FileName} {psi.Arguments}");
+
+                monitoringProcess = new Process { StartInfo = psi };
+
+                // 攔截 Service 的 stdout，轉發到 WPF 的 Trace 管道
+                monitoringProcess.OutputDataReceived += (sender, e) =>
+                {
+                    if (!string.IsNullOrEmpty(e.Data))
+                    {
+                        Trace.WriteLine($"[SERVICE CONSOLE] {e.Data}");
+                    }
+                };
+                monitoringProcess.ErrorDataReceived += (sender, e) =>
+                {
+                    if (!string.IsNullOrEmpty(e.Data))
+                    {
+                        Trace.WriteLine($"[SERVICE ERROR CONSOLE] {e.Data}");
+                    }
+                };
+
+                monitoringProcess.Start();
+
+                // 啟動非同步序列讀取
+                monitoringProcess.BeginOutputReadLine();
+                monitoringProcess.BeginErrorReadLine();
+
+                Trace.WriteLine($"[SUCCESS] MonitoringService 已喚醒。PID: {monitoringProcess.Id}");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[EXCEPTION] StartMonitoringService 發生異常: {ex.Message}");
+                Trace.WriteLine($"[EXCEPTION] StartMonitoringService 發生異常: {ex.Message}");
             }
         }
 
         private void StopMonitoringService()
         {
-            Debug.WriteLine("[INFO] 嘗試停止 MonitoringService...");
+            Trace.WriteLine("[INFO] 開始執行 StopMonitoringService 清理資源...");
+            if (monitoringProcess == null) return;
+
             try
             {
-                if (monitoringProcess != null && !monitoringProcess.HasExited)
+                monitoringProcess.Refresh();
+                if (!monitoringProcess.HasExited)
                 {
-                    Debug.WriteLine($"[INFO] 正在停止 MonitoringService (PID: {monitoringProcess.Id})...");
-                    monitoringProcess.Kill(true);
-                    monitoringProcess.Dispose();
-                    monitoringProcess = null;
-                    Debug.WriteLine("[SUCCESS] MonitoringService 已成功強制終止。");
+                    int pid = monitoringProcess.Id;
+                    Trace.WriteLine($"[INFO] 偵測到 MonitoringService (PID: {pid}) 仍活著，改用作業系統級指令強制終止...");
+
+                    // 呼叫 Windows 內建的 taskkill 命令來執行，由 Windows 自行默默清理，.NET 就不會噴任何 Exception
+                    using (var killer = new System.Diagnostics.Process())
+                    {
+                        killer.StartInfo.FileName = "taskkill";
+                        killer.StartInfo.Arguments = $"/F /PID {pid} /T"; // /T 代表連同子行程一起殺
+                        killer.StartInfo.CreateNoWindow = true;
+                        killer.StartInfo.UseShellExecute = false;
+                        killer.Start();
+                        killer.WaitForExit(1000);
+                    }
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[EXCEPTION] StopMonitoringService 失敗: {ex.Message}");
+                Trace.WriteLine($"[INFO] 停止服務過程正常放行: {ex.Message}");
+            }
+            finally
+            {
+                try { monitoringProcess.Dispose(); } catch { }
+                monitoringProcess = null;
+                Trace.WriteLine("[INFO] MonitoringService 資源清理完畢。");
             }
         }
 
-
-        //
-        // Assume the UI has a proper Close button that calls CloseApp_Click,
-        // which in turn calls this OnClosing method to ensure all resources are cleaned up properly.
-        //
         protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
         {
-            Debug.WriteLine("[INFO] MainWindow 正在關閉，開始清理資源...");
-
-            // 1. Stop the background client task by cancelling its token, which will cause it to exit gracefully
+            Trace.WriteLine("[INFO] MainWindow 正在關閉，開始清理資源...");
             cts?.Cancel();
-
-            // 2. Attempt to close the client stream if it's still open
             StopMonitoringService();
-
             base.OnClosing(e);
         }
 
@@ -189,22 +189,26 @@ namespace SystemMonitorApp
                         PipeName,
                         PipeDirection.InOut,
                         PipeOptions.Asynchronous);
-                    Debug.WriteLine("[INFO] 嘗試連接到 Named Pipe 服務...");
-                    await clientStream.ConnectAsync(3000, ct);
+
+                    Trace.WriteLine("[INFO] 正在嘗試連接到 Named Pipe 服務...");
+
+                    // 這裡給予 5 秒連線緩衝，避免 Service 初始化太慢
+                    await clientStream.ConnectAsync(5000, ct);
 
                     if (!clientStream.IsConnected)
                     {
-                        Debug.WriteLine("[WARN] 無法連接到服務，稍後重試...");
+                        Trace.WriteLine("[WARN] 無法連接到服務，1秒後重試...");
                         await Task.Delay(1000, ct);
                         continue;
                     }
 
-                    // start the async read loop directly (no extra Task.Run for IO-bound async methods)
                     await ClientReadLoopAsync(clientStream, ct);
                 }
                 catch (OperationCanceledException) { break; }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    // 這裡可以將底層拋出的 Exception 印出來看看
+                    Trace.WriteLine($"[PIPE INFRASTRUCTURE] 連線過程遭遇異常: {ex.Message}");
                     await Task.Delay(1000, ct);
                 }
                 finally
@@ -214,11 +218,9 @@ namespace SystemMonitorApp
             }
         }
 
-
-        // client read loop: receives Envelope messages from service and acts accordingly
         private async Task ClientReadLoopAsync(NamedPipeClientStream client, CancellationToken ct)
         {
-            Debug.WriteLine("[INFO] 已成功連接到服務，開始讀取數據...");
+            Trace.WriteLine("[SUCCESS] 已成功連接到服務管線，開始讀取數據串流...");
             var lenBuf = new byte[4];
             try
             {
@@ -230,13 +232,14 @@ namespace SystemMonitorApp
                         int r = await client.ReadAsync(lenBuf.AsMemory(got, 4 - got), ct);
                         if (r == 0)
                         {
-                            Debug.WriteLine("[INFO] 服務已斷開連接。");
-                            return; // disconnected
+                            Trace.WriteLine("[INFO] 服務已主動斷開連接。");
+                            return;
                         }
                         got += r;
                     }
                     int msgLen = BitConverter.ToInt32(lenBuf, 0);
                     if (msgLen <= 0) continue;
+
                     var payload = new byte[msgLen];
                     int rec = 0;
                     while (rec < msgLen)
@@ -244,12 +247,14 @@ namespace SystemMonitorApp
                         int r = await client.ReadAsync(payload.AsMemory(rec, msgLen - rec), ct);
                         if (r == 0)
                         {
-                            Debug.WriteLine("[INFO] 服務已斷開連接。");
-                            return; // disconnected
+                            Trace.WriteLine("[INFO] 服務已主動斷開連接。");
+                            return;
                         }
                         rec += r;
                     }
-                    var env = JsonSerializer.Deserialize<Envelope>(Encoding.UTF8.GetString(payload));
+
+                    var jsonStr = Encoding.UTF8.GetString(payload);
+                    var env = JsonSerializer.Deserialize<Envelope>(jsonStr);
                     if (env != null)
                     {
                         if (env.Type == "MonitorData")
@@ -262,13 +267,7 @@ namespace SystemMonitorApp
                         {
                             var procs = env.Payload.Deserialize<ProcessInfo[]>();
                             if (procs != null)
-                                // update process list on UI thread; in a real app consider using ObservableCollection
-                                // and data binding for better performance with large lists
                                 await Dispatcher.BeginInvoke(new Action(() => processListView.ItemsSource = procs));
-                        }
-                        else if (env.Type == "CommandAck")
-                        {
-                            // handle acknowledgements if desired
                         }
                     }
                 }
@@ -276,18 +275,16 @@ namespace SystemMonitorApp
             catch (OperationCanceledException) { }
             catch (Exception ex)
             {
-                Debug.WriteLine($"ClientReadLoop error: {ex.Message}");
+                Trace.WriteLine($"[ERROR] ClientReadLoop 發生錯誤: {ex.Message}");
             }
         }
-
-
 
         private void ApplyMonitorDataToUi(MonitorData data)
         {
             try
             {
                 cpuBar.Value = (int)Math.Round(data.CpuUsage);
-                cpuText.Text = $"CPU Usage: {data.CpuUsage:F2}%";
+                cpuText.Text = $"CPU 使用率: {data.CpuUsage:F2}%";
 
                 float usedMB = data.TotalMemoryMB - data.AvailableMemoryMB;
                 float ramPercent = data.TotalMemoryMB > 0 ? usedMB / data.TotalMemoryMB * 100f : 0f;
@@ -307,24 +304,20 @@ namespace SystemMonitorApp
             }
             catch (Exception ex)
             {
-                // keep UI stable on errors
-                cpuText.Text = $"UI update error: {ex.Message}";
+                cpuText.Text = $"UI 更新錯誤: {ex.Message}";
             }
         }
 
-
-        // send a command envelope to service
         private async Task SendCommandAsync(string type, object payload)
         {
-            Debug.WriteLine($"Sending command to service: {type}");
+            Trace.WriteLine($"[COMMAND] 準備發送指令至 Service: {type}");
             try
             {
                 if (clientStream == null || !clientStream.IsConnected) return;
                 var env = new { Type = type, Payload = payload };
                 var bytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(env));
                 var len = BitConverter.GetBytes(bytes.Length);
-                // ensure only one write at a time to avoid interleaving messages
-                // if user clicks multiple buttons quickly
+
                 await clientWriteSemaphore.WaitAsync();
                 try
                 {
@@ -342,7 +335,7 @@ namespace SystemMonitorApp
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"SendCommandAsync failed: {ex.Message}");
+                Trace.WriteLine($"[ERROR] SendCommandAsync 失敗: {ex.Message}");
             }
         }
 
@@ -350,7 +343,6 @@ namespace SystemMonitorApp
         {
             try
             {
-                // local optimization remains as a UI action; monitoring process is read-only in this version
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
                 GC.Collect();
@@ -364,10 +356,8 @@ namespace SystemMonitorApp
 
         private void CloseApp_Click(object sender, RoutedEventArgs e)
         {
-            var result = MessageBox.Show("確定要關閉應用程式嗎？", "確認", MessageBoxButton.YesNo, MessageBoxImage.Question);
-            if (result == MessageBoxResult.Yes)
+            if (MessageBox.Show("確定要關閉應用程式嗎？", "確認", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
             {
-                // OnClosing will handle cleanup of resources and stopping the monitoring service
                 this.Close();
             }
         }
@@ -389,6 +379,5 @@ namespace SystemMonitorApp
                 Task.Run(() => SendCommandAsync("SetIntervalSeconds", new { Seconds = sec }));
             }
         }
-
     }
 }

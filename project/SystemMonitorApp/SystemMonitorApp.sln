@@ -1,13 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.6.11822.322 stable
+VisualStudioVersion = 18.6.11822.322
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SystemMonitorApp", "SystemMonitorApp\SystemMonitorApp.csproj", "{D6B3189E-AA1D-4EE6-B13D-F0FF1ECBFE63}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonitoringService", "MonitoringService\MonitoringService.csproj", "{15569A29-8A55-443A-9E0B-48D78C0697DB}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonitoringContracts", "MonitoringContracts\MonitoringContracts.csproj", "{54DCB27B-B6C6-E64E-9CB0-08E16AAB4294}"
+EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "SetupSystemMonitorApp", "SetupSystemMonitorApp\SetupSystemMonitorApp.vdproj", "{1886DD64-E3BE-D924-571E-38B180B85499}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -55,6 +57,12 @@ Global
 		{54DCB27B-B6C6-E64E-9CB0-08E16AAB4294}.Release|x64.Build.0 = Release|Any CPU
 		{54DCB27B-B6C6-E64E-9CB0-08E16AAB4294}.Release|x86.ActiveCfg = Release|Any CPU
 		{54DCB27B-B6C6-E64E-9CB0-08E16AAB4294}.Release|x86.Build.0 = Release|Any CPU
+		{1886DD64-E3BE-D924-571E-38B180B85499}.Debug|Any CPU.ActiveCfg = Debug
+		{1886DD64-E3BE-D924-571E-38B180B85499}.Debug|x64.ActiveCfg = Debug
+		{1886DD64-E3BE-D924-571E-38B180B85499}.Debug|x86.ActiveCfg = Debug
+		{1886DD64-E3BE-D924-571E-38B180B85499}.Release|Any CPU.ActiveCfg = Release
+		{1886DD64-E3BE-D924-571E-38B180B85499}.Release|x64.ActiveCfg = Release
+		{1886DD64-E3BE-D924-571E-38B180B85499}.Release|x86.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

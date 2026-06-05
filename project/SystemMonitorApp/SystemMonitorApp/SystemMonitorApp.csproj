@@ -1,29 +1,34 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <UseWPF>true</UseWPF>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net8.0-windows</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<UseWPF>true</UseWPF>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <Content Include="bin\Debug\net8.0-windows\Services\MonitoringService.exe.runtimeconfig.json" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="System.Management" Version="9.0.6" />
+	</ItemGroup>
 
+	<ItemGroup>
+		<ProjectReference Include="..\MonitoringContracts\MonitoringContracts.csproj" />
+		<ProjectReference Include="..\MonitoringService\MonitoringService.csproj" ReferenceOutputAssembly="false" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="System.Management" Version="9.0.6" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\MonitoringContracts\MonitoringContracts.csproj" />
-    <ProjectReference Include="..\MonitoringService\MonitoringService.csproj" OutputItemType="None" CopyToOutputDirectory="Always" CopyToPublishDirectory="Always" />
-  </ItemGroup>
+	<Target Name="PublishMonitoringServiceToServicesFolder" AfterTargets="AfterBuild">
+		<PropertyGroup>
+			<ServiceProjectPath>$(MSBuildThisFileDirectory)..\MonitoringService\MonitoringService.csproj</ServiceProjectPath>
+		</PropertyGroup>
 
-  <!-- Ensure MonitoringService builds first and its outputs are copied before SystemMonitorApp -->
-  <Target Name="EnsureMonitoringServiceBuilt" BeforeTargets="Build">
-    <MSBuild Projects="..\MonitoringService\MonitoringService.csproj" Targets="Build" Properties="Configuration=$(Configuration);Platform=$(Platform)" />
-  </Target>
+		<Exec Command="chcp 437 &gt; nul &amp;&amp; taskkill /f /fi &quot;imagename eq MonitoringService*&quot; &gt;nul 2&gt;&amp;1" IgnoreExitCode="true" />
+
+		<Exec Command="set DOTNET_CLI_UI_LANGUAGE=en-US&amp;&amp; dotnet publish &quot;$(ServiceProjectPath)&quot; -c $(Configuration) -f net8.0-windows -o &quot;$(TargetDir)Services&quot; --no-dependencies"
+			  StdOutEncoding="utf-8"
+			  StdErrEncoding="utf-8" />
+
+		<Message Text="[SUCCESS] 已透過單一檔案發布機制，將 MonitoringService 融合成單一 EXE 並注入至 Services 目錄！" Importance="high" />
+	</Target>
 
 </Project>
