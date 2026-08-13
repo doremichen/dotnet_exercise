@@ -1,0 +1,121 @@
+﻿<Window x:Class="UartClientApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:UartClientApp"
+        mc:Ignorable="d"
+        Title="UART Client" Height="650" Width="800">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <!-- 上半部：UART設定與主要資料收發 -->
+            <RowDefinition Height="2*"/>
+            <!-- 下半部：系統與傳收 Log 顯示區 -->
+            <RowDefinition Height="1*"/>
+        </Grid.RowDefinitions>
+
+        <!-- 上半部區域 -->
+        <Grid Grid.Row="0" Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="220"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- 左側：UART 設定區塊 -->
+            <GroupBox Header="UART 參數設定" Grid.Column="0" Margin="0,0,10,0" Padding="5">
+                <StackPanel>
+                    <!-- 1. 序列埠名稱 (Port Name) -->
+                    <TextBlock Text="Port Name:" Margin="0,5,0,2"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <ComboBox x:Name="cmbPortName" Grid.Column="0"/>
+                        <Button x:Name="btnRefresh" Content="重新整理" Grid.Column="1" Margin="5,0,0,0" Padding="5,2" Click="btnRefresh_Click"/>
+                    </Grid>
+
+                    <!-- 2. 波特率 (Baud Rate) -->
+                    <TextBlock Text="Baud Rate:" Margin="0,8,0,2"/>
+                    <ComboBox x:Name="cmbBaudRate"/>
+
+                    <!-- 3. 資料位元 (Data Bits) -->
+                    <TextBlock Text="Data Bits:" Margin="0,8,0,2"/>
+                    <ComboBox x:Name="cmbDataBits"/>
+
+                    <!-- 4. 同位檢查 (Parity) -->
+                    <TextBlock Text="Parity:" Margin="0,8,0,2"/>
+                    <ComboBox x:Name="cmbParity"/>
+
+                    <!-- 5. 停止位元 (Stop Bits) -->
+                    <TextBlock Text="Stop Bits:" Margin="0,8,0,2"/>
+                    <ComboBox x:Name="cmbStopBits"/>
+
+                    <!-- 開啟/關閉 連線按鈕 -->
+                    <Button x:Name="btnConnect" Content="開啟連線 (Connect)" Margin="0,15,0,0" Height="32" FontWeight="Bold" Click="btnConnect_Click"/>
+
+                    <!-- 連線狀態指示 -->
+                    <TextBlock x:Name="txtStatus" Text="狀態: 未連線" Foreground="Red" HorizontalAlignment="Center" Margin="0,8,0,0" FontWeight="Bold"/>
+
+                    <!-- 清除按鈕區塊 -->
+                    <Grid Margin="0,15,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Button x:Name="btnClearReceived" Content="清除接收" Grid.Column="0" Margin="0,0,2,0" Padding="0,4" Click="btnClearReceived_Click"/>
+                        <Button x:Name="btnClearLog" Content="清除 Log" Grid.Column="1" Margin="2,0,0,0" Padding="0,4" Click="btnClearLog_Click"/>
+                    </Grid>
+                </StackPanel>
+            </GroupBox>
+
+            <!-- 右側：資料傳輸與顯示區塊 -->
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- 接收資料顯示 -->
+                <GroupBox Header="接收資料 (Received Data)" Grid.Row="0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <TextBox x:Name="txtReceived" IsReadOnly="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" TextWrapping="Wrap" Background="#F8F8F8"/>
+                    </Grid>
+                </GroupBox>
+
+                <!-- 傳送資料輸入區 -->
+                <GroupBox Header="傳送資料 (Send Data)" Grid.Row="1" Margin="0,5,0,0">
+                    <Grid Margin="5">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- 第一列：Checksum 選項設定 -->
+                        <StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,5">
+                            <TextBlock Text="Checksum 模式: " VerticalAlignment="Center" Margin="0,0,5,0"/>
+                            <ComboBox x:Name="cmbChecksumType" Width="180" VerticalAlignment="Center"/>
+                        </StackPanel>
+
+                        <!-- 第二列：傳送文字方塊與傳送按鈕 -->
+                        <TextBox x:Name="txtSend" Grid.Row="1" Grid.Column="0" Height="30" VerticalContentAlignment="Center"/>
+                        <Button x:Name="btnSend" Content="傳送" Grid.Row="1" Grid.Column="1" Width="70" Margin="5,0,0,0" Click="btnSend_Click" IsEnabled="False"/>
+                    </Grid>
+                </GroupBox>
+            </Grid>
+        </Grid>
+
+        <!-- 最底端：Log View 區塊 -->
+        <GroupBox Header="系統與通訊 Log (Log View)" Grid.Row="1">
+            <TextBox x:Name="txtLog" IsReadOnly="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" 
+                     FontFamily="Consolas" FontSize="12" Background="#1E1E1E" Foreground="#DCDCDC" TextWrapping="Wrap"/>
+        </GroupBox>
+    </Grid>
+</Window>
