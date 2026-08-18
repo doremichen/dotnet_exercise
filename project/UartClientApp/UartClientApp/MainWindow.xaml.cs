@@ -18,6 +18,7 @@
 * SOFTWARE.
 */
 
+using Microsoft.Win32; // 提供 SaveFileDialog 支援
 using System.IO;
 using System.IO.Ports;
 using System.Windows;
@@ -358,6 +359,43 @@ public partial class MainWindow : Window
         txtReceived.Clear();
         AppendLog("SYSTEM", "已清除接收資料區。");
     }
+
+    // 匯出 Log 檔至 .txt
+    private void btnExportLog_Click(object sender, RoutedEventArgs e)
+    {
+        string logContent = txtLog.Text;
+
+        if (string.IsNullOrWhiteSpace(logContent))
+        {
+            MessageBox.Show("目前沒有可供匯出的 Log 紀錄！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        // 建立檔案儲存對話框
+        SaveFileDialog saveFileDialog = new SaveFileDialog
+        {
+            Title = "匯出系統與通訊 Log",
+            Filter = "文字檔案 (*.txt)|*.txt|所有檔案 (*.*)|*.*",
+            DefaultExt = "txt",
+            FileName = $"UartLog_{DateTime.Now:yyyyMMdd_HHmmss}.txt" // 預設檔名帶有時間戳記
+        };
+
+        if (saveFileDialog.ShowDialog() == true)
+        {
+            try
+            {
+                File.WriteAllText(saveFileDialog.FileName, logContent, System.Text.Encoding.UTF8);
+                AppendLog("SYSTEM", $"Log 檔案已成功匯出至: {saveFileDialog.FileName}");
+                MessageBox.Show($"Log 匯出成功！\n儲存路徑: {saveFileDialog.FileName}", "成功", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                AppendLog("ERROR", $"匯出 Log 失敗: {ex.Message}");
+                MessageBox.Show($"儲存檔案時發生錯誤: {ex.Message}", "錯誤", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+    }
+
 
     // 清除 Log View 區
     private void btnClearLog_Click(object sender, RoutedEventArgs e)

@@ -57,14 +57,17 @@
                     <!-- 連線狀態指示 -->
                     <TextBlock x:Name="txtStatus" Text="狀態: 未連線" Foreground="Red" HorizontalAlignment="Center" Margin="0,8,0,0" FontWeight="Bold"/>
 
-                    <!-- 清除按鈕區塊 -->
+                    <!-- 清除與匯出按鈕區塊 -->
                     <Grid Margin="0,15,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
+
                         <Button x:Name="btnClearReceived" Content="清除接收" Grid.Column="0" Margin="0,0,2,0" Padding="0,4" Click="btnClearReceived_Click"/>
-                        <Button x:Name="btnClearLog" Content="清除 Log" Grid.Column="1" Margin="2,0,0,0" Padding="0,4" Click="btnClearLog_Click"/>
+                        <Button x:Name="btnClearLog" Content="清除 Log" Grid.Column="1" Margin="2,0,2,0" Padding="0,4" Click="btnClearLog_Click"/>
+                        <Button x:Name="btnExportLog" Content="匯出 Log" Grid.Column="2" Margin="2,0,0,0" Padding="0,4" Click="btnExportLog_Click"/>
                     </Grid>
                 </StackPanel>
             </GroupBox>
