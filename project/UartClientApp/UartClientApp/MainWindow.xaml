@@ -29,21 +29,37 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <ComboBox Grid.Column="0" ItemsSource="{Binding AvailablePorts}" SelectedItem="{Binding SelectedPortName}"/>
-                        <Button Grid.Column="1" Content="刷新" Margin="5,0,0,0" Padding="5,2" Command="{Binding RefreshPortsCommand}"/>
+                        <ComboBox Grid.Column="0" 
+                                  ItemsSource="{Binding AvailablePorts}" 
+                                  SelectedItem="{Binding SelectedPortName}"
+                                  IsEnabled="{Binding AreControlsEnabled}"/>
+                        <Button Grid.Column="1" 
+                                Content="刷新" 
+                                Margin="5,0,0,0" 
+                                Padding="5,2" 
+                                Command="{Binding RefreshPortsCommand}"
+                                IsEnabled="{Binding AreControlsEnabled}"/>
                     </Grid>
 
                     <TextBlock Text="Baud Rate:" Margin="0,8,0,2"/>
-                    <ComboBox ItemsSource="{Binding BaudRateOptions}" SelectedItem="{Binding SelectedBaudRate}"/>
+                    <ComboBox ItemsSource="{Binding BaudRateOptions}" 
+                              SelectedItem="{Binding SelectedBaudRate}"
+                              IsEnabled="{Binding AreControlsEnabled}"/>
 
                     <TextBlock Text="Data Bits:" Margin="0,8,0,2"/>
-                    <ComboBox ItemsSource="{Binding DataBitsOptions}" SelectedItem="{Binding SelectedDataBits}"/>
+                    <ComboBox ItemsSource="{Binding DataBitsOptions}" 
+                              SelectedItem="{Binding SelectedDataBits}"
+                              IsEnabled="{Binding AreControlsEnabled}"/>
 
                     <TextBlock Text="Parity:" Margin="0,8,0,2"/>
-                    <ComboBox ItemsSource="{Binding ParityOptions}" SelectedItem="{Binding SelectedParity}"/>
+                    <ComboBox ItemsSource="{Binding ParityOptions}" 
+                              SelectedItem="{Binding SelectedParity}"
+                              IsEnabled="{Binding AreControlsEnabled}"/>
 
                     <TextBlock Text="Stop Bits:" Margin="0,8,0,2"/>
-                    <ComboBox ItemsSource="{Binding StopBitsOptions}" SelectedItem="{Binding SelectedStopBits}"/>
+                    <ComboBox ItemsSource="{Binding StopBitsOptions}" 
+                              SelectedItem="{Binding SelectedStopBits}"
+                              IsEnabled="{Binding AreControlsEnabled}"/>
 
                     <Button Content="{Binding ConnectButtonText}" Margin="0,15,0,0" Height="32" FontWeight="Bold" Command="{Binding ConnectCommand}"/>
 
@@ -58,7 +74,7 @@
 
                         <Button Grid.Column="0" Content="清除接收" Margin="0,0,2,0" Padding="0,4" Command="{Binding ClearReceivedCommand}"/>
                         <Button Grid.Column="1" Content="清除 Log" Margin="2,0,2,0" Padding="0,4" Command="{Binding ClearLogCommand}"/>
-                        <Button Grid.Column="2" Content="导出 Log" Margin="2,0,0,0" Padding="0,4" Command="{Binding ExportLogCommand}"/>
+                        <Button Grid.Column="2" Content="導出 Log" Margin="2,0,0,0" Padding="0,4" Command="{Binding ExportLogCommand}"/>
                     </Grid>
                 </StackPanel>
             </GroupBox>
@@ -73,7 +89,7 @@
                     <TextBox IsReadOnly="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" TextWrapping="Wrap" Background="#F8F8F8" Text="{Binding ReceivedData, Mode=OneWay}"/>
                 </GroupBox>
 
-                <GroupBox Header="发送数据 (Send Data)" Grid.Row="1" Margin="0,5,0,0">
+                <GroupBox Header="發送数据 (Send Data)" Grid.Row="1" Margin="0,5,0,0">
                     <Grid Margin="5">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
@@ -96,7 +112,7 @@
             </Grid>
         </Grid>
 
-        <GroupBox Header="系统与通讯 Log (Log View)" Grid.Row="1">
+        <GroupBox Header="系统與通讯 Log (Log View)" Grid.Row="1">
             <TextBox IsReadOnly="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" 
                      FontFamily="Consolas" FontSize="12" Background="#1E1E1E" Foreground="#DCDCDC" TextWrapping="Wrap" Text="{Binding LogText, Mode=OneWay}"/>
         </GroupBox>
